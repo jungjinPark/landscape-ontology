@@ -66,14 +66,46 @@ function applyCompatibilityRefinement(weighted, matrix = {}) {
   const refinedMap = Object.fromEntries(weighted.map((item) => [item.concept, { ...item, score: item.score, reasons: [...item.reasons] }]));
   const topCandidates = weighted.slice(0, 8);
   const relationEvents = [];
+  const HIGH_DOMINANCE_THRESHOLD = 85;
+
+  const getConflictPenalty = (winner, loser) => {
+    const winnerScore = refinedMap[winner].score;
+    const loserScore = refinedMap[loser].score;
+    let dominantPenalty = 15;
+    let subordinatePenalty = 20;
+
+    if (winnerScore >= HIGH_DOMINANCE_THRESHOLD) {
+      dominantPenalty = 16;
+      subordinatePenalty = 24;
+    }
+
+    if (winner === "Quiet Resort" && ["Event Plaza", "Dynamic Flow"].includes(loser)) {
+      dominantPenalty = 18;
+      subordinatePenalty = 30;
+    }
+
+    if (winner === "Controlled Edge" && loser === "Dynamic Flow") {
+      dominantPenalty = 17;
+      subordinatePenalty = 30;
+    }
+
+    if (winnerScore - loserScore >= 18) {
+      dominantPenalty = Math.max(dominantPenalty, 18);
+      subordinatePenalty = Math.max(subordinatePenalty, 27);
+    }
+
+    return { dominantPenalty, subordinatePenalty };
+  };
+
   for (let i = 0; i < topCandidates.length; i += 1) {
     for (let j = i + 1; j < topCandidates.length; j += 1) {
       const a = topCandidates[i].concept;
       const b = topCandidates[j].concept;
       const relation = getRelation(matrix, a, b) || getRelation(matrix, b, a);
       if (!relation) continue;
+
       if (relation === "compatible") {
-        const bonus = 7;
+        const bonus = Math.max(5, Math.min(15, Math.round((refinedMap[a].score + refinedMap[b].score) / 20)));
         refinedMap[a].score += bonus;
         refinedMap[b].score += bonus;
         refinedMap[a].reasons.push(`compatibility +${bonus} (${b})`);
@@ -84,8 +116,8 @@ function applyCompatibilityRefinement(weighted, matrix = {}) {
         const bWeight = refinedMap[b].score;
         const dominant = aWeight >= bWeight ? a : b;
         const subordinate = dominant === a ? b : a;
-        const dominantPenalty = 12;
-        const subordinatePenalty = 18;
+        const { dominantPenalty, subordinatePenalty } = getConflictPenalty(dominant, subordinate);
+
         refinedMap[dominant].score -= dominantPenalty;
         refinedMap[subordinate].score -= subordinatePenalty;
         refinedMap[dominant].reasons.push(`conflict -${dominantPenalty} (${subordinate})`);
@@ -94,6 +126,7 @@ function applyCompatibilityRefinement(weighted, matrix = {}) {
       }
     }
   }
+
   const refined = Object.values(refinedMap)
     .map((item) => ({ ...item, score: clampScore(item.score) }))
     .sort((a, b) => b.score - a.score);
@@ -162,7 +195,7 @@ function recommend(input, db) {
   const dominantSummary = `이 프로젝트는 ${primaryCore.concept} 중심 전략(${primaryCore.score})이 가장 강하게 도출되며, ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join("와 ") || "보조 전략"}가 보행 흐름과 체류 경험을 보완합니다.`;
   const compatibilityHighlights = compatibilityResult.relationEvents.slice(0, 4)
     .map((event) => `${event.a} ↔ ${event.b} (${event.label})`).join(", ");
-  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략 dominance는 낮추고 조화 전략 dominance는 강화했습니다.`;
+  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제되며, 조화 전략은 가점으로 결합 밀도를 높였습니다. 특히 Dominant 전략이 85 이상일 때 상충 전략은 추가 감점되어 설계 방향을 선명하게 수렴시켰습니다.`;
 
   return {
     primaryDesignLanguage,
