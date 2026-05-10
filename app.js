@@ -281,6 +281,49 @@ function deriveLayoutLogic(input, scenario = { steps: [] }) {
   };
 }
 
+function buildBubbleDiagramEngine(scenario = { steps: [] }, allocation = [], layoutLogic = { cards: [] }) {
+  const steps = safeArray(scenario?.steps);
+  const allocationMap = new Map(safeArray(allocation).map((item) => [asText(item?.name, ""), item]));
+  const primaryLayout = asText(layoutLogic?.cards?.[0]?.name, "Axis Campus Layout");
+
+  const zoneRank = { "Public": 1, "Semi-public": 2, "Private": 3 };
+  const grouped = { "Public": [], "Semi-public": [], "Private": [] };
+
+  const bubbles = steps.map((step, index) => {
+    const name = asText(step?.name, `Space ${index + 1}`);
+    const linked = allocationMap.get(name) || {};
+    const ratio = Number(linked?.ratio || 0);
+    const level = ratio >= 24 ? "xl" : ratio >= 19 ? "lg" : ratio >= 14 ? "md" : "sm";
+    const role = (
+      (step?.phase === "Arrival" && "진입") ||
+      (step?.phase === "Transition" && "이동") ||
+      (name.includes("Node") && "결절") ||
+      (step?.phase === "Rest" && "체류") ||
+      (step?.phase === "View" && "조망") ||
+      (name.includes("Buffer") && "완충") || "체류"
+    );
+    const bubble = { name, zone: asText(step?.zone, "Semi-public"), role, ratio, level, order: index + 1 };
+    if (!grouped[bubble.zone]) grouped[bubble.zone] = [];
+    grouped[bubble.zone].push(bubble);
+    return bubble;
+  });
+
+  const byZone = Object.entries(grouped)
+    .filter(([, list]) => list.length)
+    .sort((a, b) => (zoneRank[a[0]] || 99) - (zoneRank[b[0]] || 99))
+    .map(([zone, list]) => ({ zone, items: list.sort((x, y) => y.ratio - x.ratio) }));
+
+  const flow = bubbles.map((b) => b.name).join(" → ");
+  const layoutTone = {
+    "Axis Campus Layout": "axis",
+    "Loop Garden Layout": "loop",
+    "Clustered Courtyard Layout": "cluster",
+    "Linear Forest Spine": "linear"
+  }[primaryLayout] || "axis";
+
+  return { primaryLayout, layoutTone, byZone, bubbles, flow };
+}
+
 async function loadJson(path, fallback) {
   try { const res = await fetch(path); if (!res.ok) throw new Error(path); return await res.json(); }
   catch { return fallback; }
@@ -453,6 +496,7 @@ function recommend(input, db) {
   const scenario = buildSpatialScenario(input, compatibilityResult.refined);
   const spaceAllocation = computeSpaceAllocation(input, scenario);
   const layoutLogic = deriveLayoutLogic(input, scenario);
+  const bubbleDiagram = buildBubbleDiagramEngine(scenario, spaceAllocation, layoutLogic);
   const safeConditions = Array.isArray(input?.conditions) ? input.conditions : []
   const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${safeConditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario?.flowLabel || "기본"} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario?.zoneFlow || "Public → Semi-public → Private"}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
 
@@ -468,6 +512,7 @@ function recommend(input, db) {
     spatialScenario: scenario,
     spaceAllocation,
     layoutLogic,
+    bubbleDiagram,
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
       "하부 식재 전략": uniq(mappedPlanting.filter((item) => item.includes("하부") || item.includes("층위"))).slice(0, 2),
@@ -508,6 +553,8 @@ function renderResult(rec) {
   const spaceAllocation = safeArray(rec?.spaceAllocation);
   const layoutLogicCards = safeArray(rec?.layoutLogic?.cards);
   const layoutDiagram = asText(rec?.layoutLogic?.diagram, "-");
+  const bubbleDiagram = rec?.bubbleDiagram || {};
+  const bubbleZones = safeArray(bubbleDiagram?.byZone);
 
   let scenarioMarkup = "";
   try {
@@ -561,6 +608,24 @@ function renderResult(rec) {
           <p class="layout-sequence"><strong>연결 Spatial Sequence:</strong> ${asText(item?.sequence)}</p>
           <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
         </div>`).join("") || "<p>추천 가능한 layout logic 결과가 없습니다.</p>"}</div></article>
+      <article class="result-card full-width bubble-board ${asText(bubbleDiagram?.layoutTone, "axis")}"><h3>13. Bubble Diagram Structure</h3>
+      <p class="card-caption">Spatial Scenario + Space Allocation + Layout Logic를 구조 다이어그램으로 변환한 conceptual board입니다.</p>
+      <p class="bubble-flow"><strong>${asText(bubbleDiagram?.primaryLayout, "-")}</strong> · ${asText(bubbleDiagram?.flow, "-")}</p>
+      <div class="bubble-zones">${bubbleZones.map((zone) => `
+        <section class="bubble-zone">
+          <h4>[ ${asText(zone?.zone).toUpperCase()} ]</h4>
+          <div class="bubble-column">${safeArray(zone?.items).map((item, idx) => `
+            <div class="bubble-wrap">
+              <div class="bubble-card ${asText(item?.level, "md")}">
+                <span class="bubble-role">${asText(item?.role)}</span>
+                <strong>${asText(item?.name)}</strong>
+                <span class="bubble-ratio">${Math.round(item?.ratio || 0)}%</span>
+              </div>
+              ${idx < safeArray(zone?.items).length - 1 ? "<div class='bubble-arrow'>↓</div>" : ""}
+            </div>
+          `).join("")}</div>
+        </section>
+      `).join("") || "<p>Bubble diagram 데이터가 없습니다.</p>"}</div></article>
     </div>`;
 }
 

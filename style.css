@@ -307,3 +307,69 @@ ul { padding-left: 1.1rem; margin: 0; }
   color: #455e52;
   font-size: 0.87rem;
 }
+
+.bubble-board {
+  background: linear-gradient(145deg, #f6faf7 0%, #edf4ef 100%);
+  border-color: #c9d8cf;
+}
+.bubble-flow {
+  margin: 0.25rem 0 0.85rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px dashed #adc0b4;
+  border-radius: 8px;
+  background: #f7fcf9;
+}
+.bubble-zones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.7rem;
+}
+.bubble-zone {
+  border: 1px solid #d6e3dc;
+  border-radius: 10px;
+  background: #fcfefd;
+  padding: 0.65rem;
+}
+.bubble-zone h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  color: #3b5649;
+}
+.bubble-column { display: grid; gap: 0.38rem; }
+.bubble-wrap { display: grid; gap: 0.34rem; justify-items: center; }
+.bubble-card {
+  width: 100%;
+  border: 1px solid #b9ccc1;
+  border-radius: 999px;
+  background: #f2f8f4;
+  padding: 0.45rem 0.7rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+.bubble-card.sm { transform: scale(0.95); }
+.bubble-card.md { transform: scale(1); }
+.bubble-card.lg { transform: scale(1.04); border-color: #8ead9c; background: #eaf4ee; }
+.bubble-card.xl { transform: scale(1.08); border-color: #6c917d; background: #dfeee4; box-shadow: 0 6px 16px rgba(30, 63, 48, 0.11); }
+.bubble-role {
+  font-size: 0.75rem;
+  color: #4c6559;
+  border: 1px solid #c0d0c7;
+  border-radius: 999px;
+  padding: 0.1rem 0.38rem;
+  background: #f8fcf9;
+}
+.bubble-ratio {
+  font-size: 0.82rem;
+  color: #355949;
+  font-weight: 700;
+}
+.bubble-arrow { color: #577466; font-weight: 700; }
+
+.bubble-board.axis .bubble-column { border-left: 2px solid #c2d6cb; padding-left: 0.5rem; }
+.bubble-board.loop .bubble-column .bubble-wrap:nth-child(even) .bubble-card { border-style: dashed; }
+.bubble-board.cluster .bubble-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bubble-board.cluster .bubble-wrap { justify-items: stretch; }
+.bubble-board.cluster .bubble-arrow { display: none; }
+.bubble-board.linear .bubble-card { border-radius: 10px; }
