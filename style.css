@@ -181,3 +181,30 @@ ul { padding-left: 1.1rem; margin: 0; }
 .weight-row.low { opacity: 0.7; }
 .primary-card .primary-pill { font-size: 0.95rem; }
 .secondary-pill, .emotion-tag { font-variant-numeric: tabular-nums; }
+
+.compatibility-list {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+.compatibility-item {
+  border: 1px solid #d6ddd9;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  background: #f8fbf9;
+}
+.compatibility-item.compatible {
+  border-color: #7ab48f;
+  background: #edf8f1;
+  color: #215336;
+}
+.compatibility-item.conflict {
+  border-color: #dd8c8c;
+  background: #fff1f1;
+  color: #7b2525;
+}
+.compatibility-item .impact {
+  font-weight: 700;
+  margin-left: 0.3rem;
+}
