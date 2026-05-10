@@ -81,11 +81,16 @@ function computeWeights(input, db, rule) {
 }
 
 function toHierarchy(weighted) {
-  return {
-    primary: weighted.filter((w) => w.score >= 90),
-    secondary: weighted.filter((w) => w.score >= 70 && w.score <= 89),
-    supporting: weighted.filter((w) => w.score >= 50 && w.score <= 69)
-  };
+  const eligible = weighted.filter((w) => w.score >= 45);
+  let primary = eligible.filter((w) => w.score >= 85).slice(0, 2);
+
+  if (!primary.length && eligible.length) primary = [eligible[0]];
+
+  const primaryConcepts = new Set(primary.map((item) => item.concept));
+  const secondary = eligible.filter((w) => w.score >= 65 && w.score <= 84 && !primaryConcepts.has(w.concept));
+  const supporting = eligible.filter((w) => w.score >= 45 && w.score <= 64 && !primaryConcepts.has(w.concept));
+
+  return { primary, secondary, supporting };
 }
 
 function recommend(input, db) {
@@ -93,9 +98,9 @@ function recommend(input, db) {
   const weightedConcepts = computeWeights(input, db, rule);
   const hierarchy = toHierarchy(weightedConcepts);
 
-  const primaryDesignLanguage = hierarchy.primary.map((v) => v.concept);
-  const secondaryDesignLanguage = hierarchy.secondary.map((v) => v.concept).slice(0, 4);
-  const emotionalLayer = hierarchy.supporting.map((v) => v.concept).slice(0, 4);
+  const primaryDesignLanguage = hierarchy.primary.map((v) => `${v.concept} ${v.score}`);
+  const secondaryDesignLanguage = hierarchy.secondary.map((v) => `${v.concept} ${v.score}`).slice(0, 4);
+  const emotionalLayer = hierarchy.supporting.map((v) => `${v.concept} ${v.score}`).slice(0, 6);
 
   const topConcepts = weightedConcepts.filter((w) => w.score >= 50).slice(0, 8).map((w) => w.concept);
   const mappedPlanting = topConcepts.map((c) => db.plantingStrategyMapping.find((p) => p.concept === c)?.planting_strategies || []).flat();
@@ -105,13 +110,16 @@ function recommend(input, db) {
     input.conditions.includes("보행 연결 중요") ? ["Immersive Walk Garden"] : []
   )).slice(0, 4);
 
-  const reasonPrimary = weightedConcepts.slice(0, 2).map((x) => `${x.concept}(${x.score})`).join(" / ");
-  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 조건으로 ${reasonPrimary}의 weight가 우세해 Primary로 결정되었습니다. Secondary는 결절부 전환·공공성 보완을 위해 병행되며, Supporting layer는 감성/미기후 완충 역할로 배치됩니다.`;
+  const primaryCore = hierarchy.primary[0] || weightedConcepts[0];
+  const secondaryPair = hierarchy.secondary.slice(0, 2);
+  const dominantSummary = `이 프로젝트는 ${primaryCore.concept} 중심 전략(${primaryCore.score})이 가장 강하게 도출되며, ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join("와 ") || "보조 전략"}가 보행 흐름과 체류 경험을 보완합니다.`;
+  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다.`;
 
   return {
     primaryDesignLanguage,
     secondaryDesignLanguage,
     emotionalLayer,
+    dominantSummary,
     recommendationReason: reason,
     weightedConcepts,
     archetypes,
@@ -129,7 +137,7 @@ function renderCategoryBlock(title, items) { return `<div class="sub-card"><h4>$
 
 function renderWeightRows(items) {
   return items.map((item, i) => {
-    const tier = item.score >= 90 ? "Primary" : item.score >= 70 ? "Secondary" : "Supporting";
+    const tier = item.score >= 85 ? "Primary" : item.score >= 65 ? "Secondary" : item.score >= 45 ? "Supporting" : "Low";
     return `<div class="weight-row ${tier.toLowerCase()}">
       <div class="weight-head"><strong>${i + 1}. ${item.concept}</strong><span class="score-chip">${item.score}</span></div>
       <div class="bar-track"><span class="bar-fill" style="width:${item.score}%;"></span></div>
@@ -141,13 +149,14 @@ function renderWeightRows(items) {
 function renderResult(rec) {
   document.getElementById("result").innerHTML = `
     <div class="result-grid">
-      <article class="result-card primary-card"><h3>1. Primary Design Language</h3><div class="primary-items">${rec.primaryDesignLanguage.map((item) => `<span class="primary-pill">${item}</span>`).join("") || "<span class='primary-pill'>No primary above 90</span>"}</div></article>
-      <article class="result-card secondary-card"><h3>2. Secondary Design Language</h3><div class="secondary-items">${rec.secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${item}</span>`).join("") || "<span class='secondary-pill'>No secondary</span>"}</div></article>
-      <article class="result-card emotion-card"><h3>3. Supporting Emotional Layer</h3><div class="emotion-tags">${rec.emotionalLayer.map((item) => `<span class="emotion-tag">${item}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
-      <article class="result-card full-width"><h3>4. Strategy Weight Inference</h3>${renderWeightRows(rec.weightedConcepts.filter((w) => w.score >= 50).slice(0, 10))}</article>
-      <article class="result-card full-width"><h3>5. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
-      <article class="result-card full-width"><h3>6. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
-      <article class="result-card full-width"><h3>7. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
+      <article class="result-card full-width summary-card"><h3>1. Dominant Strategy Summary</h3><p>${rec.dominantSummary}</p></article>
+      <article class="result-card primary-card"><h3>2. Primary Design Language</h3><div class="primary-items">${rec.primaryDesignLanguage.map((item) => `<span class="primary-pill">${item}</span>`).join("") || "<span class='primary-pill'>No primary available</span>"}</div></article>
+      <article class="result-card secondary-card"><h3>3. Secondary Design Language</h3><div class="secondary-items">${rec.secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${item}</span>`).join("") || "<span class='secondary-pill'>No secondary</span>"}</div></article>
+      <article class="result-card emotion-card"><h3>4. Supporting Emotional Layer</h3><div class="emotion-tags">${rec.emotionalLayer.map((item) => `<span class="emotion-tag">${item}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
+      <article class="result-card full-width"><h3>5. Strategy Weight Inference</h3>${renderWeightRows(rec.weightedConcepts.filter((w) => w.score >= 45).slice(0, 12))}</article>
+      <article class="result-card full-width"><h3>6. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
+      <article class="result-card full-width"><h3>7. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
+      <article class="result-card full-width"><h3>8. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
     </div>`;
 }
 

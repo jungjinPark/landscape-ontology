@@ -173,3 +173,11 @@ ul { padding-left: 1.1rem; margin: 0; }
   background: linear-gradient(90deg, #426f59, #6ca98a);
 }
 .weight-meta { color: #4e6257; font-size: 0.83rem; }
+
+.summary-card {
+  background: linear-gradient(135deg, #f7fbf8 0%, #edf4ef 100%);
+  border-color: #c9d8cf;
+}
+.weight-row.low { opacity: 0.7; }
+.primary-card .primary-pill { font-size: 0.95rem; }
+.secondary-pill, .emotion-tag { font-variant-numeric: tabular-nums; }
