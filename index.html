@@ -15,61 +15,79 @@
     </header>
 
     <section class="panel form-panel">
-      <h2>프로젝트 조건 입력</h2>
-      <form id="strategy-form">
-        <div class="field-grid">
-          <label>프로젝트 유형
-            <select id="projectType" required>
-              <option value="Office Headquarters">Office Headquarters</option>
-              <option value="Data Center">Data Center</option>
-              <option value="Hospital">Hospital</option>
-              <option value="Mixed-use Complex">Mixed-use Complex</option>
-            </select>
-          </label>
+      <h2>Site Input</h2>
+      <div class="site-input-layout">
+        <form id="strategy-form">
+          <fieldset>
+            <legend>1) 대상지 기본 정보</legend>
+            <div class="field-grid">
+              <label>프로젝트명<input type="text" id="projectName" placeholder="예: OO 복합개발" /></label>
+              <label>주소<input type="text" id="siteAddress" placeholder="예: 서울시 ..." /></label>
+              <label>대지/조경계획 면적(㎡)<input type="number" id="siteArea" min="0" step="1" placeholder="예: 25000" /></label>
+              <label>프로젝트 유형
+                <select id="projectType" required>
+                  <option value="Office Headquarters">Office Headquarters</option>
+                  <option value="Data Center">Data Center</option>
+                  <option value="Hospital">Hospital</option>
+                  <option value="Mixed-use Complex">Mixed-use Complex</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
 
-          <label>도시 맥락
-            <select id="urbanContext" required>
-              <option value="도심형">도심형</option>
-              <option value="산업단지형">산업단지형</option>
-              <option value="캠퍼스형">캠퍼스형</option>
-              <option value="주거복합형">주거복합형</option>
-              <option value="상업복합형">상업복합형</option>
-            </select>
-          </label>
+          <fieldset>
+            <legend>2) 평면도 이미지 업로드 (PNG/JPG/JPEG)</legend>
+            <label>파일 선택
+              <input type="file" id="sitePlanImage" accept="image/png,image/jpeg,image/jpg" />
+            </label>
+          </fieldset>
 
-          <label>원하는 감성 톤
-            <select id="tone" required>
-              <option value="Quiet Resort">Quiet Resort</option>
-              <option value="Urban Forest">Urban Forest</option>
-              <option value="Minimal Modern">Minimal Modern</option>
-              <option value="Immersive Healing">Immersive Healing</option>
-              <option value="Signature Landmark">Signature Landmark</option>
-            </select>
-          </label>
+          <fieldset>
+            <legend>3) 건축물 배치 정보</legend>
+            <div class="check-grid" id="buildingPlacement">
+              <label><input type="radio" name="buildingPlacement" value="중앙배치" checked />중앙배치</label><label><input type="radio" name="buildingPlacement" value="전면배치" />전면배치</label><label><input type="radio" name="buildingPlacement" value="후면배치" />후면배치</label><label><input type="radio" name="buildingPlacement" value="분동형 배치" />분동형 배치</label><label><input type="radio" name="buildingPlacement" value="중정형 배치" />중정형 배치</label><label><input type="radio" name="buildingPlacement" value="타워형 배치" />타워형 배치</label><label><input type="radio" name="buildingPlacement" value="선형 배치" />선형 배치</label><label><input type="radio" name="buildingPlacement" value="기타" />기타</label>
+            </div>
+          </fieldset>
 
-          <label>유지관리 수준
-            <select id="maintenance" required>
-              <option value="저관리">저관리</option>
-              <option value="중관리" selected>중관리</option>
-              <option value="고관리">고관리</option>
-            </select>
-          </label>
-        </div>
+          <fieldset>
+            <legend>4) 차량동선 정보 (복수 선택)</legend>
+            <div class="check-grid" id="vehicleFlow">
+              <label><input type="checkbox" value="전면 drop-off" />전면 drop-off</label><label><input type="checkbox" value="측면 drop-off" />측면 drop-off</label><label><input type="checkbox" value="지하주차장 진입 포함" />지하주차장 진입 포함</label><label><input type="checkbox" value="서비스 차량 동선 포함" />서비스 차량 동선 포함</label><label><input type="checkbox" value="소방차 동선 중요" />소방차 동선 중요</label><label><input type="checkbox" value="보차분리 중요" />보차분리 중요</label><label><input type="checkbox" value="차량동선 최소화" />차량동선 최소화</label>
+            </div>
+          </fieldset>
 
-        <fieldset>
-          <legend>공간 조건 (복수 선택)</legend>
-          <div class="check-grid" id="conditions">
-            <label><input type="checkbox" value="공개공지 포함" />공개공지 포함</label>
-            <label><input type="checkbox" value="옥상정원 포함" />옥상정원 포함</label>
-            <label><input type="checkbox" value="피로티 하부 포함" />피로티 하부 포함</label>
-            <label><input type="checkbox" value="선큰공간 포함" />선큰공간 포함</label>
-            <label><input type="checkbox" value="보행 연결 중요" />보행 연결 중요</label>
-            <label><input type="checkbox" value="조망 중요" />조망 중요</label>
-          </div>
-        </fieldset>
+          <fieldset>
+            <legend>5) 보행동선 정보 (복수 선택)</legend>
+            <div class="check-grid" id="pedestrianFlow">
+              <label><input type="checkbox" value="주출입구 연결 중요" />주출입구 연결 중요</label><label><input type="checkbox" value="공개공지 연결 중요" />공개공지 연결 중요</label><label><input type="checkbox" value="대중교통 접근 중요" />대중교통 접근 중요</label><label><input type="checkbox" value="순환 산책로 필요" />순환 산책로 필요</label><label><input type="checkbox" value="옥상/피로티 연결 필요" />옥상/피로티 연결 필요</label><label><input type="checkbox" value="조망축 연결 필요" />조망축 연결 필요</label>
+            </div>
+          </fieldset>
 
-        <button type="submit">전략 추천 생성</button>
-      </form>
+          <fieldset>
+            <legend>기존 프로젝트 조건 (복수 선택)</legend>
+            <div class="field-grid">
+              <label>도시 맥락
+                <select id="urbanContext" required><option value="도심형">도심형</option><option value="산업단지형">산업단지형</option><option value="캠퍼스형">캠퍼스형</option><option value="주거복합형">주거복합형</option><option value="상업복합형">상업복합형</option></select>
+              </label>
+              <label>원하는 감성 톤
+                <select id="tone" required><option value="Quiet Resort">Quiet Resort</option><option value="Urban Forest">Urban Forest</option><option value="Minimal Modern">Minimal Modern</option><option value="Immersive Healing">Immersive Healing</option><option value="Signature Landmark">Signature Landmark</option></select>
+              </label>
+              <label>유지관리 수준
+                <select id="maintenance" required><option value="저관리">저관리</option><option value="중관리" selected>중관리</option><option value="고관리">고관리</option></select>
+              </label>
+            </div>
+            <div class="check-grid" id="conditions">
+              <label><input type="checkbox" value="공개공지 포함" />공개공지 포함</label><label><input type="checkbox" value="옥상정원 포함" />옥상정원 포함</label><label><input type="checkbox" value="피로티 하부 포함" />피로티 하부 포함</label><label><input type="checkbox" value="선큰공간 포함" />선큰공간 포함</label><label><input type="checkbox" value="보행 연결 중요" />보행 연결 중요</label><label><input type="checkbox" value="조망 중요" />조망 중요</label>
+            </div>
+          </fieldset>
+          <button type="submit">전략 추천 생성</button>
+        </form>
+
+        <aside class="panel image-preview-panel">
+          <h3>평면도 미리보기</h3>
+          <div id="sitePlanPreview" class="site-plan-preview">이미지를 업로드하면 이곳에 브라우저 미리보기가 표시됩니다.</div>
+        </aside>
+      </div>
       <p id="status" class="status"></p>
     </section>
 
