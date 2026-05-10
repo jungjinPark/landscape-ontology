@@ -26,6 +26,50 @@ const baseConceptWeights = {
   "Dynamic Flow": 37, "Framed Nature": 34, "Curved Transition": 34, "Sculpted Ground": 32
 };
 
+
+const scenarioCatalog = {
+  "Arrival Plaza": { phase: "Arrival", zone: "Public", description: "도시와 건축의 경계를 완화하는 개방형 진입공간", drivers: ["Signature Plaza", "Urban Canopy"] },
+  "Canopy Walk": { phase: "Transition", zone: "Public", description: "연속 수관 아래 보행 흐름을 유도하는 주 동선", drivers: ["Urban Canopy", "Linear Forest"] },
+  "Transition Curve Node": { phase: "Transition", zone: "Semi-public", description: "직선 동선에서 곡선 체류공간으로 감속 전환", drivers: ["Controlled Curve", "Spatial Relief"] },
+  "Quiet Pocket Garden": { phase: "Rest", zone: "Semi-public", description: "짧은 휴식을 위한 저자극 포켓 정원", drivers: ["Quiet Resort", "Healing Flow"] },
+  "Roof Outlook Lounge": { phase: "View", zone: "Private", description: "상부 레벨에서 조망과 체류를 결합한 라운지", drivers: ["Framed Nature", "Layered Experience"] },
+  "Linear Walk": { phase: "Transition", zone: "Public", description: "명확한 축으로 이동성을 강화하는 선형 산책축", drivers: ["Linear Forest", "Urban Canopy"] },
+  "Signature Node": { phase: "Rest", zone: "Semi-public", description: "브랜드 정체성을 담은 중심 결절 공간", drivers: ["Signature Plaza", "Controlled Curve"] },
+  "Roof Lounge": { phase: "View", zone: "Private", description: "업무 사용자 중심의 고층 휴게·조망 공간", drivers: ["Layered Experience", "Framed Nature"] },
+  "Healing Arrival": { phase: "Arrival", zone: "Public", description: "긴장을 완화하는 치유형 진입 전이 공간", drivers: ["Healing Flow", "Quiet Resort"] },
+  "Slow Walk": { phase: "Transition", zone: "Semi-public", description: "보행 속도를 낮추는 완만한 전이 산책로", drivers: ["Controlled Curve", "Healing Flow"] },
+  "Recovery Garden": { phase: "Rest", zone: "Semi-public", description: "회복·정서 안정에 집중한 정원", drivers: ["Quiet Resort", "Layered Nature"] },
+  "Therapy Terrace": { phase: "View", zone: "Private", description: "재활 활동과 외부 조망을 결합한 테라스", drivers: ["Healing Flow", "Framed Nature"] },
+  "Security Buffer Walk": { phase: "Arrival", zone: "Public", description: "보안 레이어를 단계적으로 경험시키는 완충 동선", drivers: ["Spatial Buffer", "Controlled Edge"] },
+  "Controlled Forest Edge": { phase: "Transition", zone: "Semi-public", description: "경계를 명확히 하되 녹지 가장자리로 압박감을 완화", drivers: ["Controlled Edge", "Linear Forest"] },
+  "Quiet Deck": { phase: "Rest", zone: "Private", description: "소음·자극을 줄인 제한적 휴식 데크", drivers: ["Quiet Resort", "Spatial Relief"] },
+  "Minimal Courtyard": { phase: "Exit", zone: "Private", description: "동선 마무리를 위한 절제된 중정", drivers: ["Spatial Relief", "Sculpted Ground"] },
+  "Event Plaza": { phase: "Arrival", zone: "Public", description: "유입을 증폭하는 다목적 이벤트 광장", drivers: ["Event Plaza", "Dynamic Flow"] },
+  "Retail Walk": { phase: "Transition", zone: "Public", description: "상업 프로그램과 연동되는 연속 보행축", drivers: ["Dynamic Flow", "Linear Forest"] },
+  "Layered Terrace": { phase: "Rest", zone: "Semi-public", description: "수직 레벨 차를 활용한 다층 체류 테라스", drivers: ["Layered Experience", "Layered Nature"] },
+  "Rooftop Social Garden": { phase: "View", zone: "Private", description: "커뮤니티 활동과 조망을 결합한 옥상 정원", drivers: ["Event Plaza", "Framed Nature"] }
+};
+
+const scenarioBiasByProjectType = {
+  "Office Headquarters": ["Arrival Plaza", "Linear Walk", "Signature Node", "Roof Lounge"],
+  "Hospital": ["Healing Arrival", "Slow Walk", "Recovery Garden", "Therapy Terrace"],
+  "Data Center": ["Security Buffer Walk", "Controlled Forest Edge", "Quiet Deck", "Minimal Courtyard"],
+  "Mixed-use Complex": ["Event Plaza", "Retail Walk", "Layered Terrace", "Rooftop Social Garden"]
+};
+
+function buildSpatialScenario(input, weightedConcepts) {
+  const seeded = scenarioBiasByProjectType[input.projectType] || ["Arrival Plaza", "Canopy Walk", "Transition Curve Node", "Quiet Pocket Garden", "Roof Outlook Lounge"];
+  const topConcepts = weightedConcepts.slice(0, 6).map((item) => item.concept);
+  const scored = seeded.map((name, index) => {
+    const meta = scenarioCatalog[name];
+    const strategyLinks = (meta?.drivers || []).filter((driver) => topConcepts.includes(driver)).length;
+    return { name, order: index, ...meta, strategyLinks, linkedStrategies: meta.drivers.filter((driver) => topConcepts.includes(driver)) };
+  });
+  const flowLabel = `${scored[0].phase} → ${scored[1].phase} → ${scored[2].phase} → ${scored[3].phase} → ${scored[4].phase}`;
+  const zoneFlow = `${scored[0].zone} → ${scored[1].zone} → ${scored[2].zone} → ${scored[3].zone} → ${scored[4].zone}`;
+  return { steps: scored, flowLabel, zoneFlow };
+}
+
 async function loadJson(path, fallback) {
   try { const res = await fetch(path); if (!res.ok) throw new Error(path); return await res.json(); }
   catch { return fallback; }
@@ -195,7 +239,8 @@ function recommend(input, db) {
   const dominantSummary = `이 프로젝트는 ${primaryCore.concept} 중심 전략(${primaryCore.score})이 가장 강하게 도출되며, ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join("와 ") || "보조 전략"}가 보행 흐름과 체류 경험을 보완합니다.`;
   const compatibilityHighlights = compatibilityResult.relationEvents.slice(0, 4)
     .map((event) => `${event.a} ↔ ${event.b} (${event.label})`).join(", ");
-  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제되며, 조화 전략은 가점으로 결합 밀도를 높였습니다. 특히 Dominant 전략이 85 이상일 때 상충 전략은 추가 감점되어 설계 방향을 선명하게 수렴시켰습니다.`;
+  const scenario = buildSpatialScenario(input, compatibilityResult.refined);
+  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario.flowLabel} 흐름으로 구성되어 주 보행축에서 감속 노드와 체류 노드를 거쳐 조망/종결 시퀀스로 이동합니다. 존 전이는 ${scenario.zoneFlow}로 설정되어 공공-준공공-프라이빗 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
 
   return {
     primaryDesignLanguage,
@@ -206,6 +251,7 @@ function recommend(input, db) {
     weightedConcepts: compatibilityResult.refined,
     compatibilityAnalysis: compatibilityResult.relationEvents,
     archetypes,
+    spatialScenario: scenario,
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
       "하부 식재 전략": uniq(mappedPlanting.filter((item) => item.includes("하부") || item.includes("층위"))).slice(0, 2),
@@ -241,9 +287,10 @@ function renderResult(rec) {
       <article class="result-card emotion-card"><h3>4. Supporting Emotional Layer</h3><div class="emotion-tags">${rec.emotionalLayer.map((item) => `<span class="emotion-tag">${item}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
       <article class="result-card full-width"><h3>5. Strategy Weight Inference</h3>${renderWeightRows(rec.weightedConcepts.filter((w) => w.score >= 45).slice(0, 12))}</article>
       <article class="result-card full-width"><h3>6. Strategy Compatibility Analysis</h3><ul class="compatibility-list">${compatibilityRows}</ul></article>
-      <article class="result-card full-width"><h3>7. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
-      <article class="result-card full-width"><h3>8. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
-      <article class="result-card full-width"><h3>9. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
+      <article class="result-card full-width"><h3>7. Spatial Experience Scenario</h3><div class="scenario-timeline">${rec.spatialScenario.steps.map((step, i) => `<div class="scenario-step"><div class="scenario-index">${i+1}</div><div><h4>${step.name}</h4><p>${step.description}</p><p class="scenario-meta">Flow: ${step.phase} · Zone: ${step.zone}</p><p class="scenario-link">Strategy Link: ${step.linkedStrategies.join(" / ") || step.drivers.join(" / ")}</p></div></div>`).join("")}</div><p class="scenario-flow">${rec.spatialScenario.flowLabel} / ${rec.spatialScenario.zoneFlow}</p></article>
+      <article class="result-card full-width"><h3>8. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
+      <article class="result-card full-width"><h3>9. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
+      <article class="result-card full-width"><h3>10. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
     </div>`;
 }
 
