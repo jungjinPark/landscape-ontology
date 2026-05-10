@@ -492,6 +492,7 @@ function applySiteInputAdjustments(weightedConcepts, input) {
   if (vf.includes("소방차 동선 중요")) {
     add("Controlled Edge", 7, "site input: fire truck route priority");
     add("Spatial Buffer", 7, "site input: fire truck route priority");
+    add("Controlled Curve", 5, "site input: emergency turning radius");
   }
   if (bp === "중정형 배치") {
     add("Quiet Resort", 8, "site input: courtyard building type");
@@ -500,6 +501,14 @@ function applySiteInputAdjustments(weightedConcepts, input) {
   if (bp === "분동형 배치") {
     add("Linear Forest", 7, "site input: fragmented masses");
     add("Urban Canopy", 5, "site input: fragmented masses");
+  }
+  if (vf.includes("전면 drop-off")) {
+    add("Signature Plaza", 7, "site input: front drop-off arrival emphasis");
+    add("Event Plaza", 4, "site input: front drop-off arrival emphasis");
+  }
+  if (vf.includes("보차분리 중요")) {
+    add("Spatial Relief", 7, "site input: pedestrian-vehicle segregation");
+    add("Linear Forest", 5, "site input: pedestrian spine reinforcement");
   }
   if (pf.includes("공개공지 연결 중요")) {
     add("Signature Plaza", 8, "site input: public plaza linkage");
