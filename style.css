@@ -208,3 +208,31 @@ ul { padding-left: 1.1rem; margin: 0; }
   font-weight: 700;
   margin-left: 0.3rem;
 }
+
+.scenario-timeline {
+  display: grid;
+  gap: 0.65rem;
+}
+.scenario-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 0.65rem;
+  border: 1px solid #d9e4dd;
+  border-radius: 10px;
+  padding: 0.65rem;
+  background: #f7fbf9;
+}
+.scenario-index {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #355b49;
+  color: #fff;
+  font-weight: 700;
+}
+.scenario-meta, .scenario-link, .scenario-flow {
+  color: #4e6257;
+  font-size: 0.88rem;
+}
