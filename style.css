@@ -236,3 +236,19 @@ ul { padding-left: 1.1rem; margin: 0; }
   color: #4e6257;
   font-size: 0.88rem;
 }
+
+.scenario-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.scenario-tag {
+  border: 1px solid #b7cbc0;
+  background: #edf5f0;
+  color: #2f4b3d;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
