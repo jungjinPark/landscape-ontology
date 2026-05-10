@@ -1,0 +1,58 @@
+[
+  {
+    "id": "forest",
+    "label_ko": "숲",
+    "label_en": "Forest",
+    "description": "자연 생태 기반의 식생 공간 개념",
+    "related_concepts": ["water", "community"],
+    "landscape_use_cases": ["도시숲 조성", "생태공원 계획"]
+  },
+  {
+    "id": "flow",
+    "label_ko": "흐름",
+    "label_en": "Flow",
+    "description": "사람과 시선, 바람, 물의 이동을 고려한 공간 흐름 개념",
+    "related_concepts": ["plaza", "water"],
+    "landscape_use_cases": ["보행 동선 계획", "공간 시퀀스 설계"]
+  },
+  {
+    "id": "plaza",
+    "label_ko": "광장",
+    "label_en": "Plaza",
+    "description": "집합과 활동을 수용하는 개방형 중심 공간 개념",
+    "related_concepts": ["community", "art"],
+    "landscape_use_cases": ["공공광장 조성", "이벤트 공간 계획"]
+  },
+  {
+    "id": "water",
+    "label_ko": "수공간",
+    "label_en": "Water",
+    "description": "경관, 미기후, 체험을 강화하는 물 요소 중심 개념",
+    "related_concepts": ["flow", "resort"],
+    "landscape_use_cases": ["수변 산책로 설계", "빗물정원 계획"]
+  },
+  {
+    "id": "community",
+    "label_ko": "커뮤니티",
+    "label_en": "Community",
+    "description": "사용자 참여와 사회적 교류를 촉진하는 공간 개념",
+    "related_concepts": ["plaza", "art"],
+    "landscape_use_cases": ["주민참여형 공원", "공유 정원 조성"]
+  },
+  {
+    "id": "art",
+    "label_ko": "예술",
+    "label_en": "Art",
+    "description": "예술적 장치와 상징성을 통해 장소 정체성을 강화하는 개념",
+    "related_concepts": ["plaza", "community"],
+    "landscape_use_cases": ["공공미술 연계 경관", "테마형 경관 연출"]
+  },
+  {
+    "id": "resort",
+    "label_ko": "리조트",
+    "label_en": "Resort",
+    "description": "휴식과 체류 경험 중심의 복합 경관 공간 개념",
+    "related_concepts": ["water", "forest"],
+    "landscape_use_cases": ["리조트 외부공간 계획", "웰니스 경관 설계"]
+  }
+]
