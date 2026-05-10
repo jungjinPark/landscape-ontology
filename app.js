@@ -494,11 +494,11 @@ function applySiteInputAdjustments(weightedConcepts, input) {
     add("Spatial Buffer", 7, "site input: fire truck route priority");
     add("Controlled Curve", 5, "site input: emergency turning radius");
   }
-  if (bp === "중정형 배치") {
+  if (bp === "중정형" || bp === "중정형 배치") {
     add("Quiet Resort", 8, "site input: courtyard building type");
     add("Healing Flow", 6, "site input: courtyard building type");
   }
-  if (bp === "분동형 배치") {
+  if (bp === "분동형" || bp === "분동형 배치") {
     add("Linear Forest", 7, "site input: fragmented masses");
     add("Urban Canopy", 5, "site input: fragmented masses");
   }
@@ -532,9 +532,8 @@ function buildSiteAnalysisSummary(input, topConcepts) {
 
   return {
     scale: `${sizeText} 대상지로 해석되며 ${area ? `${area.toLocaleString()}㎡` : "정량 면적 정보는 보완 필요"} 기준으로 외부공간 밀도 조정이 필요합니다.`,
-    placement: `${placement} 조건에서 포켓/중정/축형 오픈스페이스 조합 가능성을 우선 검토합니다.`,
-    constraint: `${vehicleIntensity}으로 보행 및 휴게공간은 보차 분리, 완충녹지, 감속 결절 중심으로 계획합니다.`,
-    pedestrian: `${walk.join(", ") || "보행축 우선순위 미입력"}를 반영하여 주출입-공개공지-상부 연결축의 연속성을 강화합니다.`,
+    placement: `${placement} 유형을 기준으로 포켓/중정/축형 오픈스페이스 조합 가능성을 우선 검토합니다.`,
+    flow: `${vehicleIntensity}이며 보행 우선 항목(${walk.join(", ") || "미입력"})을 반영해 보차 분리, 완충녹지, 감속 결절 중심으로 계획합니다.`,
     strategy: `추천 전략 방향은 ${safeArray(topConcepts).slice(0, 4).join(" / ")} 중심으로 설정됩니다.`
   };
 }
@@ -712,7 +711,8 @@ function renderResult(rec) {
 
   resultNode.innerHTML = `
     <div class="result-grid">
-      <article class="result-card full-width summary-card"><h3>1. Dominant Strategy Summary</h3><p>${asText(rec?.dominantSummary, "요약 정보가 없습니다.")}</p></article>
+      <article class="result-card full-width summary-card"><h3>1. Site Analysis Summary</h3><div class="nested-grid"><div class="sub-card"><h4>대상지 규모 해석</h4><p>${asText(rec?.siteAnalysisSummary?.scale)}</p></div><div class="sub-card"><h4>배치 구조 해석</h4><p>${asText(rec?.siteAnalysisSummary?.placement)}</p></div><div class="sub-card"><h4>차량/보행 흐름 해석</h4><p>${asText(rec?.siteAnalysisSummary?.flow)}</p></div></div></article>
+      <article class="result-card full-width summary-card"><h3>2. Dominant Strategy Summary</h3><p>${asText(rec?.dominantSummary, "요약 정보가 없습니다.")}</p></article>
       <article class="result-card primary-card"><h3>2. Primary Design Language</h3><div class="primary-items">${primaryDesignLanguage.map((item) => `<span class="primary-pill">${asText(item)}</span>`).join("") || "<span class='primary-pill'>No primary available</span>"}</div></article>
       <article class="result-card secondary-card"><h3>3. Secondary Design Language</h3><div class="secondary-items">${secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${asText(item)}</span>`).join("") || "<span class='secondary-pill'>No secondary</span>"}</div></article>
       <article class="result-card emotion-card"><h3>4. Supporting Emotional Layer</h3><div class="emotion-tags">${emotionalLayer.map((item) => `<span class="emotion-tag">${asText(item)}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
@@ -720,7 +720,7 @@ function renderResult(rec) {
       <article class="result-card full-width"><h3>6. Strategy Compatibility Analysis</h3><ul class="compatibility-list">${compatibilityRows}</ul></article>
       <article class="result-card full-width"><h3>7. Recommendation Reason</h3><p>${asText(rec?.recommendationReason, "추천 이유 정보가 없습니다.")}</p></article>
       <article class="result-card full-width"><h3>8. Recommended Spatial Archetypes</h3>${renderNestedList(archetypes)}</article>
-      <article class="result-card full-width"><h3>9. Site Analysis Summary</h3><div class="nested-grid"><div class="sub-card"><h4>대상지 규모 해석</h4><p>${asText(rec?.siteAnalysisSummary?.scale)}</p></div><div class="sub-card"><h4>건축물 배치 가능성</h4><p>${asText(rec?.siteAnalysisSummary?.placement)}</p></div><div class="sub-card"><h4>차량동선 제약</h4><p>${asText(rec?.siteAnalysisSummary?.constraint)}</p></div><div class="sub-card"><h4>보행축/공개공지 가능성</h4><p>${asText(rec?.siteAnalysisSummary?.pedestrian)}</p></div><div class="sub-card"><h4>추천 전략 방향</h4><p>${asText(rec?.siteAnalysisSummary?.strategy)}</p></div></div></article>
+      
       <article class="result-card full-width"><h3>10. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(plantingStrategies).map(([title, items]) => renderCategoryBlock(title, safeArray(items))).join("")}</div></article>
       ${scenarioMarkup}
       <article class="result-card full-width"><h3>12. Space Allocation Strategy</h3><p class="card-caption">Spatial Experience Scenario 기반 기본계획 수준 공간 비중 제안</p>
@@ -767,7 +767,7 @@ function renderResult(rec) {
       siteAddress: document.getElementById("siteAddress").value,
       siteArea: document.getElementById("siteArea").value,
       projectType: document.getElementById("projectType").value,
-      buildingPlacement: document.querySelector("input[name=\"buildingPlacement\"]:checked")?.value || "",
+      buildingPlacement: document.querySelector("#buildingPlacement")?.value || "",
       vehicleFlow: [...document.querySelectorAll("#vehicleFlow input:checked")].map((i) => i.value),
       pedestrianFlow: [...document.querySelectorAll("#pedestrianFlow input:checked")].map((i) => i.value),
       urbanContext: document.getElementById("urbanContext").value,

@@ -495,3 +495,49 @@ input[type="text"], input[type="number"], input[type="file"] {
 @media (max-width: 1024px) {
   .site-input-layout { grid-template-columns: 1fr; }
 }
+
+.site-input-card {
+  border-color: #b9cec0;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fcf9 100%);
+}
+
+.site-input-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="file"] {
+  margin-top: 0.35rem;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.56rem 0.7rem;
+  font-size: 0.95rem;
+  background: #fff;
+}
+
+.site-plan-preview {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #aac1b2;
+  border-radius: 10px;
+  background: #f4faf6;
+  color: #4e6257;
+  padding: 0.8rem;
+  text-align: center;
+}
+
+.site-plan-preview img {
+  max-width: 100%;
+  max-height: 360px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+@media (max-width: 860px) {
+  .site-input-layout { grid-template-columns: 1fr; }
+}

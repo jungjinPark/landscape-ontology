@@ -14,8 +14,8 @@
       <p class="subtitle">프로젝트 조건을 선택하면 설계 전략 weight 기반 hierarchy에 compatibility/conflict refinement를 반영한 공간·식재 전략과 Spatial Experience Scenario, Bubble Diagram Rendering을 보고서 형식으로 제안합니다.</p>
     </header>
 
-    <section class="panel form-panel">
-      <h2>Site Input</h2>
+    <section class="panel form-panel site-input-card">
+      <h2>대상지 정보 입력 (Site Input)</h2>
       <div class="site-input-layout">
         <form id="strategy-form">
           <fieldset>
@@ -43,28 +43,36 @@
           </fieldset>
 
           <fieldset>
-            <legend>3) 건축물 배치 정보</legend>
-            <div class="check-grid" id="buildingPlacement">
-              <label><input type="radio" name="buildingPlacement" value="중앙배치" checked />중앙배치</label><label><input type="radio" name="buildingPlacement" value="전면배치" />전면배치</label><label><input type="radio" name="buildingPlacement" value="후면배치" />후면배치</label><label><input type="radio" name="buildingPlacement" value="분동형 배치" />분동형 배치</label><label><input type="radio" name="buildingPlacement" value="중정형 배치" />중정형 배치</label><label><input type="radio" name="buildingPlacement" value="타워형 배치" />타워형 배치</label><label><input type="radio" name="buildingPlacement" value="선형 배치" />선형 배치</label><label><input type="radio" name="buildingPlacement" value="기타" />기타</label>
-            </div>
+            <legend>3) 건축물 배치 유형</legend>
+            <label>건축물 배치 유형
+              <select id="buildingPlacement" required>
+                <option value="중앙배치">중앙배치</option>
+                <option value="전면배치">전면배치</option>
+                <option value="후면배치">후면배치</option>
+                <option value="분동형">분동형</option>
+                <option value="중정형">중정형</option>
+                <option value="선형형">선형형</option>
+                <option value="타워형">타워형</option>
+              </select>
+            </label>
           </fieldset>
 
           <fieldset>
             <legend>4) 차량동선 정보 (복수 선택)</legend>
             <div class="check-grid" id="vehicleFlow">
-              <label><input type="checkbox" value="전면 drop-off" />전면 drop-off</label><label><input type="checkbox" value="측면 drop-off" />측면 drop-off</label><label><input type="checkbox" value="지하주차장 진입 포함" />지하주차장 진입 포함</label><label><input type="checkbox" value="서비스 차량 동선 포함" />서비스 차량 동선 포함</label><label><input type="checkbox" value="소방차 동선 중요" />소방차 동선 중요</label><label><input type="checkbox" value="보차분리 중요" />보차분리 중요</label><label><input type="checkbox" value="차량동선 최소화" />차량동선 최소화</label>
+              <label><input type="checkbox" value="전면 drop-off" />전면 drop-off</label><label><input type="checkbox" value="지하주차장 진입" />지하주차장 진입</label><label><input type="checkbox" value="서비스 차량" />서비스 차량</label><label><input type="checkbox" value="소방차 동선 중요" />소방차 동선 중요</label><label><input type="checkbox" value="보차분리 중요" />보차분리 중요</label>
             </div>
           </fieldset>
 
           <fieldset>
             <legend>5) 보행동선 정보 (복수 선택)</legend>
             <div class="check-grid" id="pedestrianFlow">
-              <label><input type="checkbox" value="주출입구 연결 중요" />주출입구 연결 중요</label><label><input type="checkbox" value="공개공지 연결 중요" />공개공지 연결 중요</label><label><input type="checkbox" value="대중교통 접근 중요" />대중교통 접근 중요</label><label><input type="checkbox" value="순환 산책로 필요" />순환 산책로 필요</label><label><input type="checkbox" value="옥상/피로티 연결 필요" />옥상/피로티 연결 필요</label><label><input type="checkbox" value="조망축 연결 필요" />조망축 연결 필요</label>
+              <label><input type="checkbox" value="주출입구 연결 중요" />주출입구 연결 중요</label><label><input type="checkbox" value="공개공지 연결 중요" />공개공지 연결 중요</label><label><input type="checkbox" value="순환 산책로 필요" />순환 산책로 필요</label><label><input type="checkbox" value="조망축 중요" />조망축 중요</label>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>기존 프로젝트 조건 (복수 선택)</legend>
+            <legend>프로젝트 조건 입력 (복수 선택)</legend>
             <div class="field-grid">
               <label>도시 맥락
                 <select id="urbanContext" required><option value="도심형">도심형</option><option value="산업단지형">산업단지형</option><option value="캠퍼스형">캠퍼스형</option><option value="주거복합형">주거복합형</option><option value="상업복합형">상업복합형</option></select>
@@ -84,7 +92,7 @@
         </form>
 
         <aside class="panel image-preview-panel">
-          <h3>평면도 미리보기</h3>
+          <h3>Site Plan Preview</h3>
           <div id="sitePlanPreview" class="site-plan-preview">이미지를 업로드하면 이곳에 브라우저 미리보기가 표시됩니다.</div>
         </aside>
       </div>
