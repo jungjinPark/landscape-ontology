@@ -1,0 +1,102 @@
+[
+  {
+    "concept": "Urban Canopy",
+    "planting_strategies": [
+      "대형 교목을 보행축을 따라 연속 식재해 캐노피 연결성을 확보한다.",
+      "건축 외곽부에는 수관 폭이 큰 수종을 집중 배치해 매스 스케일을 완화한다.",
+      "하부에는 내음성 관목과 지피를 층위 식재해 숲형 보행 환경을 조성한다."
+    ],
+    "recommended_species": [
+      "느티나무 (Zelkova serrata)",
+      "팽나무 (Celtis sinensis)",
+      "이팝나무 (Chionanthus retusus)",
+      "사철나무 (Euonymus japonicus)",
+      "맥문동 (Liriope platyphylla)"
+    ],
+    "spatial_effects": [
+      "도심 열환경 완화 및 그늘 기반 체류성 강화",
+      "건축 스케일 완충을 통한 보행 심리 안정",
+      "연속된 숲 이미지 형성으로 장소 정체성 강화"
+    ]
+  },
+  {
+    "concept": "Quiet Resort",
+    "planting_strategies": [
+      "저채도 재료와 조응하도록 수형이 단정한 상록·낙엽 교목을 절제해 배치한다.",
+      "체류 노드 주변에 향기·질감 중심의 중소관목을 군식해 감성적 밀도를 높인다.",
+      "시야를 과도하게 차단하지 않는 낮은 초화·지피 식재로 차분한 경관을 유지한다."
+    ],
+    "recommended_species": [
+      "소나무 (Pinus densiflora)",
+      "배롱나무 (Lagerstroemia indica)",
+      "동백나무 (Camellia japonica)",
+      "수국 (Hydrangea macrophylla)",
+      "비비추 (Hosta longipes)"
+    ],
+    "spatial_effects": [
+      "절제된 고급감과 안정된 리조트형 분위기 조성",
+      "저속 체류와 휴식 중심의 공간 사용 유도",
+      "감각적 식재 디테일을 통한 장기 체류 만족도 향상"
+    ]
+  },
+  {
+    "concept": "Controlled Curve",
+    "planting_strategies": [
+      "직선 동선의 결절부에 곡선형 식재대를 배치해 보행 전환을 유도한다.",
+      "곡선 구간은 반복 모듈 식재로 관리성을 유지하면서도 유연한 흐름을 만든다.",
+      "코너부에는 수관이 가벼운 교목을 점식해 시야 개방성과 방향성을 동시에 확보한다."
+    ],
+    "recommended_species": [
+      "산딸나무 (Cornus kousa)",
+      "자작나무 (Betula platyphylla)",
+      "남천 (Nandina domestica)",
+      "애기조팝나무 (Spiraea japonica)",
+      "무늬억새 (Miscanthus sinensis var.)"
+    ],
+    "spatial_effects": [
+      "직선 위주의 공간 긴장 완화",
+      "보행 흐름의 자연스러운 감속 및 전환",
+      "도시적 질서와 유기적 경관의 균형 확보"
+    ]
+  },
+  {
+    "concept": "Spatial Relief",
+    "planting_strategies": [
+      "도로·건축 경계부에 완충녹지를 다층으로 구성해 소음·시각 자극을 저감한다.",
+      "휴게 공간 주변에 계절 변화가 완만한 수종을 중심으로 안정적 경관을 형성한다.",
+      "저관리형 지피와 초본을 활용해 과도한 조형보다 심리적 여백을 강조한다."
+    ],
+    "recommended_species": [
+      "메타세쿼이아 (Metasequoia glyptostroboides)",
+      "왕벚나무 (Prunus yedoensis)",
+      "조팝나무 (Spiraea prunifolia)",
+      "화살나무 (Euonymus alatus)",
+      "수호초 (Pachysandra terminalis)"
+    ],
+    "spatial_effects": [
+      "도시 스트레스 저감과 심리적 완충",
+      "차분한 휴게 분위기 형성으로 회복 경험 강화",
+      "공간 체류 리듬 안정화 및 이용자 만족도 향상"
+    ]
+  },
+  {
+    "concept": "Linear Forest",
+    "planting_strategies": [
+      "선형 보행축을 따라 교목 열식을 구성하고 구간별 군락 변주를 적용한다.",
+      "중층 관목을 리본 형태로 연속 배치해 숲의 깊이감을 선형으로 연장한다.",
+      "보행·자전거 동선 분리 구간에 식재 버퍼를 삽입해 안전성과 경관성을 동시에 확보한다."
+    ],
+    "recommended_species": [
+      "메타세쿼이아 (Metasequoia glyptostroboides)",
+      "은행나무 (Ginkgo biloba)",
+      "스트로브잣나무 (Pinus strobus)",
+      "회양목 (Buxus microphylla)",
+      "큰기름새 (Andropogon gerardii)"
+    ],
+    "spatial_effects": [
+      "선형 동선에 숲의 연속감과 방향성 부여",
+      "보행 중심의 녹지축 형성으로 도시 생태 네트워크 강화",
+      "이동 경험의 단조로움 완화 및 경관 몰입도 향상"
+    ]
+  }
+]
