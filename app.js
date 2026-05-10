@@ -65,58 +65,158 @@ async function loadData() {
 
 function uniq(arr) { return [...new Set(arr.filter(Boolean))]; }
 
+function toKoreanProjectName(projectType) {
+  const mapping = {
+    "Office Headquarters": "도심형 오피스",
+    "Data Center": "데이터센터",
+    "Hospital": "의료시설",
+    "Mixed-use Complex": "복합개발"
+  };
+  return mapping[projectType] || projectType;
+}
+
 function recommend(input, db) {
-  const rule = db.designDecisionRules.find(r => r.project_type === input.projectType) || db.designDecisionRules[0];
+  const rule = db.designDecisionRules.find((r) => r.project_type === input.projectType) || db.designDecisionRules[0];
   const toneConcepts = toneConceptMap[input.tone] || [];
   const concepts = uniq([...(rule?.recommended_concepts || []), ...toneConcepts]).slice(0, 6);
+
+  const primaryDesignLanguage = concepts.slice(0, 2);
+  const secondaryDesignLanguage = concepts.slice(2, 5);
+  const emotionalLayer = uniq([input.tone, ...toneConcepts.filter((concept) => !primaryDesignLanguage.includes(concept))]).slice(0, 3);
 
   const archetypes = uniq((rule?.recommended_archetypes || []).concat(
     input.conditions.includes("선큰공간 포함") ? ["Layered Terrace Garden"] : [],
     input.conditions.includes("보행 연결 중요") ? ["Immersive Walk Garden"] : []
   )).slice(0, 4);
 
-  const planting = concepts
-    .map(c => db.plantingStrategyMapping.find(p => p.concept === c)?.planting_strategies?.[0])
-    .filter(Boolean)
-    .slice(0, 4);
+  const mappedPlanting = concepts
+    .map((c) => db.plantingStrategyMapping.find((p) => p.concept === c)?.planting_strategies || [])
+    .flat();
 
-  const structural = [];
-  if (input.conditions.includes("공개공지 포함")) structural.push("개방형 광장 + 모듈형 휴게가구로 공공성 강화");
-  if (input.conditions.includes("옥상정원 포함")) structural.push("경량 플랜터/데크 기반의 옥상형 그늘 휴게시설 적용");
-  if (input.conditions.includes("피로티 하부 포함")) structural.push("반사광 저감 마감 + 내음성 식재 + 소규모 라운지 계획");
-  if (input.maintenance === "저관리") structural.push("내건성·저관리 수종 중심 및 관수/전정 단순화");
-  if (input.maintenance === "고관리") structural.push("계절 연출형 초화·수경·정밀 관리형 디테일 적용");
+  const plantingStrategies = {
+    "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
+    "하부 식재 전략": uniq(mappedPlanting.filter((item) => item.includes("하부") || item.includes("층위"))).slice(0, 2),
+    "계절감 전략": input.maintenance === "고관리"
+      ? ["계절 개화/단풍 연출형 초화·관목 레이어를 강화"]
+      : ["상록·낙엽 수종 균형으로 사계절 리듬을 안정적으로 확보"],
+    "유지관리 전략": input.maintenance === "저관리"
+      ? ["내건성·저관리 수종 중심의 관수/전정 단순화"]
+      : ["현장 관리 수준에 맞춘 단계별 관수·전정 계획을 적용"]
+  };
 
-  const extraSpatial = input.conditions.map(c => conditionHints[c]).filter(Boolean);
-  const spatial = uniq([...(rule?.spatial_strategies || []), ...extraSpatial]).slice(0, 5);
+  const spatialStrategies = {
+    "주동선 전략": [
+      input.conditions.includes("보행 연결 중요")
+        ? "주 보행축에 연속 캐노피를 적용해 이동 동선을 명확히 연결"
+        : "프로젝트 진입부와 핵심 시설을 연결하는 명료한 주동선을 설정"
+    ],
+    "체류 노드 전략": ["결절부에 포켓 라운지/그늘 쉼터를 배치해 체류 밀도를 조절"],
+    "공개공지 전략": [
+      input.conditions.includes("공개공지 포함")
+        ? "개방형 광장과 이벤트 포켓을 결합해 공공성과 프로그램 수용성을 강화"
+        : "오픈스페이스를 소규모 커뮤니티 포켓 중심으로 계획"
+    ],
+    "옥상 전략": [
+      input.conditions.includes("옥상정원 포함")
+        ? "경량 토심 대응형 식재와 데크 쉼터를 결합한 저속 순환형 옥상정원을 적용"
+        : "옥상은 향후 확장 가능한 그린 인프라 예비 영역으로 계획"
+    ]
+  };
 
-  const keywords = uniq([
-    input.projectType, input.urbanContext, input.tone,
-    ...concepts.slice(0, 3), ...archetypes.slice(0, 2),
-    input.maintenance === "저관리" ? "low maintenance planting" : "layered planting"
-  ]).join(", ");
+  const signatureElements = uniq([
+    "시그니처 쉘터",
+    "조형 벤치",
+    input.conditions.includes("공개공지 포함") ? "수공간" : null,
+    "조명 구조물"
+  ]);
+
+  const conditionSummary = input.conditions.length ? input.conditions.join(" + ") : "기본 오픈스페이스";
+  const reason = `${toKoreanProjectName(input.projectType)} + ${conditionSummary} 조건이므로 ${primaryDesignLanguage[0]}를 핵심 전략으로 설정하고, ${secondaryDesignLanguage[0] || primaryDesignLanguage[1] || "Layered Experience"}를 통해 보행·체류 전환 경험을 보완합니다.`;
+
+  const promptKeywords = uniq([
+    ...primaryDesignLanguage,
+    ...secondaryDesignLanguage,
+    ...emotionalLayer,
+    input.maintenance === "저관리" ? "Low Maintenance Planting" : "Layered Planting",
+    "Low Saturation Material"
+  ]);
 
   return {
-    designLanguage: concepts.join(" · "),
-    archetype: archetypes.join(" / "),
-    planting,
-    spatial,
-    structural: structural.length ? structural : ["보행·체류·조망 균형을 기준으로 시설물을 절제 배치"],
-    tone: input.tone,
-    promptKeywords: keywords
+    primaryDesignLanguage,
+    secondaryDesignLanguage,
+    emotionalLayer,
+    recommendationReason: reason,
+    archetypes,
+    plantingStrategies,
+    spatialStrategies,
+    signatureElements,
+    promptKeywords
   };
+}
+
+function renderNestedList(items) {
+  return `<ul>${items.map((v) => `<li>${v}</li>`).join("")}</ul>`;
+}
+
+function renderCategoryBlock(title, items) {
+  return `<div class="sub-card"><h4>${title}</h4>${renderNestedList(items)}</div>`;
 }
 
 function renderResult(rec) {
   const el = document.getElementById("result");
   el.innerHTML = `
-    <div class="result-card"><h3>추천 설계 언어</h3><p>${rec.designLanguage}</p></div>
-    <div class="result-card"><h3>추천 공간 archetype</h3><p>${rec.archetype}</p></div>
-    <div class="result-card"><h3>추천 식재 전략</h3><ul>${rec.planting.map(v => `<li>${v}</li>`).join("")}</ul></div>
-    <div class="result-card"><h3>추천 공간 전략</h3><ul>${rec.spatial.map(v => `<li>${v}</li>`).join("")}</ul></div>
-    <div class="result-card"><h3>추천 구조물 및 시설물 방향</h3><ul>${rec.structural.map(v => `<li>${v}</li>`).join("")}</ul></div>
-    <div class="result-card"><h3>감성 톤</h3><p>${rec.tone}</p></div>
-    <div class="result-card"><h3>AI 이미지 생성 프롬프트 키워드</h3><div class="keyword-box">${rec.promptKeywords}</div></div>
+    <div class="result-grid">
+      <article class="result-card primary-card">
+        <h3>1. Primary Design Language</h3>
+        <p class="card-caption">프로젝트를 리드하는 핵심 설계 언어</p>
+        <div class="primary-items">${rec.primaryDesignLanguage.map((item) => `<span class="primary-pill">${item}</span>`).join("")}</div>
+      </article>
+
+      <article class="result-card secondary-card">
+        <h3>2. Secondary Design Language</h3>
+        <p class="card-caption">핵심 설계 언어를 보완하는 보조 전략</p>
+        <div class="secondary-items">${rec.secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${item}</span>`).join("")}</div>
+      </article>
+
+      <article class="result-card emotion-card">
+        <h3>3. Supporting Emotional Layer</h3>
+        <div class="emotion-tags">${rec.emotionalLayer.map((item) => `<span class="emotion-tag">${item}</span>`).join("")}</div>
+      </article>
+
+      <article class="result-card full-width">
+        <h3>4. Recommendation Reason</h3>
+        <p>${rec.recommendationReason}</p>
+      </article>
+
+      <article class="result-card full-width">
+        <h3>5. Recommended Spatial Archetypes</h3>
+        ${renderNestedList(rec.archetypes)}
+      </article>
+
+      <article class="result-card full-width">
+        <h3>6. Recommended Planting Strategy</h3>
+        <div class="nested-grid">
+          ${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}
+        </div>
+      </article>
+
+      <article class="result-card full-width">
+        <h3>7. Recommended Spatial Strategy</h3>
+        <div class="nested-grid">
+          ${Object.entries(rec.spatialStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}
+        </div>
+      </article>
+
+      <article class="result-card full-width">
+        <h3>8. Signature Elements</h3>
+        ${renderNestedList(rec.signatureElements)}
+      </article>
+
+      <article class="result-card full-width">
+        <h3>9. Expandable AI Prompt Keywords</h3>
+        <div class="keyword-tags">${rec.promptKeywords.map((item) => `<span>${item}</span>`).join("")}</div>
+      </article>
+    </div>
   `;
 }
 
@@ -133,7 +233,7 @@ function renderResult(rec) {
       urbanContext: document.getElementById("urbanContext").value,
       tone: document.getElementById("tone").value,
       maintenance: document.getElementById("maintenance").value,
-      conditions: [...document.querySelectorAll("#conditions input:checked")].map(i => i.value)
+      conditions: [...document.querySelectorAll("#conditions input:checked")].map((i) => i.value)
     };
     const rec = recommend(input, db);
     renderResult(rec);
