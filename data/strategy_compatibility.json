@@ -1,0 +1,66 @@
+{
+  "Urban Canopy": {
+    "compatible": ["Linear Forest", "Framed Nature", "Spatial Relief", "Signature Plaza"],
+    "conflict": ["Event Plaza", "Controlled Edge"]
+  },
+  "Controlled Curve": {
+    "compatible": ["Dynamic Flow", "Curved Transition", "Layered Experience"],
+    "conflict": ["Controlled Edge", "Linear Forest"]
+  },
+  "Quiet Resort": {
+    "compatible": ["Layered Nature", "Spatial Relief", "Healing Flow"],
+    "conflict": ["Event Plaza", "Dynamic Flow"]
+  },
+  "Spatial Relief": {
+    "compatible": ["Quiet Resort", "Layered Nature", "Curved Transition"],
+    "conflict": ["Event Plaza"]
+  },
+  "Healing Flow": {
+    "compatible": ["Quiet Resort", "Layered Nature", "Curved Transition"],
+    "conflict": ["Signature Plaza"]
+  },
+  "Layered Nature": {
+    "compatible": ["Quiet Resort", "Healing Flow", "Spatial Relief", "Linear Forest"],
+    "conflict": ["Event Plaza"]
+  },
+  "Controlled Edge": {
+    "compatible": ["Linear Forest", "Spatial Buffer", "Framed Nature"],
+    "conflict": ["Curved Transition", "Controlled Curve", "Dynamic Flow"]
+  },
+  "Linear Forest": {
+    "compatible": ["Urban Canopy", "Controlled Edge", "Spatial Buffer", "Layered Nature"],
+    "conflict": ["Sculpted Ground", "Controlled Curve"]
+  },
+  "Spatial Buffer": {
+    "compatible": ["Controlled Edge", "Linear Forest", "Framed Nature"],
+    "conflict": ["Event Plaza", "Dynamic Flow"]
+  },
+  "Signature Plaza": {
+    "compatible": ["Urban Canopy", "Event Plaza", "Sculpted Ground"],
+    "conflict": ["Healing Flow", "Quiet Resort", "Spatial Buffer"]
+  },
+  "Layered Experience": {
+    "compatible": ["Dynamic Flow", "Event Plaza", "Controlled Curve"],
+    "conflict": ["Controlled Edge"]
+  },
+  "Event Plaza": {
+    "compatible": ["Signature Plaza", "Layered Experience", "Dynamic Flow"],
+    "conflict": ["Quiet Resort", "Layered Nature", "Spatial Buffer", "Spatial Relief"]
+  },
+  "Dynamic Flow": {
+    "compatible": ["Event Plaza", "Layered Experience", "Controlled Curve"],
+    "conflict": ["Quiet Resort", "Spatial Buffer", "Controlled Edge"]
+  },
+  "Framed Nature": {
+    "compatible": ["Urban Canopy", "Controlled Edge", "Spatial Buffer"],
+    "conflict": ["Event Plaza"]
+  },
+  "Curved Transition": {
+    "compatible": ["Controlled Curve", "Healing Flow", "Spatial Relief"],
+    "conflict": ["Controlled Edge"]
+  },
+  "Sculpted Ground": {
+    "compatible": ["Signature Plaza", "Event Plaza", "Layered Experience"],
+    "conflict": ["Linear Forest", "Spatial Buffer"]
+  }
+}

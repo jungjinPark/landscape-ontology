@@ -15,7 +15,8 @@ const fallbackData = {
   spatialArchetypes: [{ archetype: "Corporate Forest Campus", landscape_elements: ["그늘 산책로", "포켓 라운지"] }],
   designRelationships: [],
   projectConceptMapping: [],
-  strategyWeightBias: { projectTypeBias: {}, dominanceBoost: {}, urbanContextBias: {}, toneBias: {}, maintenanceBias: {}, conditionBias: {} }
+  strategyWeightBias: { projectTypeBias: {}, dominanceBoost: {}, urbanContextBias: {}, toneBias: {}, maintenanceBias: {}, conditionBias: {} },
+  strategyCompatibility: {}
 };
 
 const baseConceptWeights = {
@@ -31,15 +32,16 @@ async function loadJson(path, fallback) {
 }
 
 async function loadData() {
-  const [designRelationships, projectConceptMapping, plantingStrategyMapping, spatialArchetypes, designDecisionRules, strategyWeightBias] = await Promise.all([
+  const [designRelationships, projectConceptMapping, plantingStrategyMapping, spatialArchetypes, designDecisionRules, strategyWeightBias, strategyCompatibility] = await Promise.all([
     loadJson("data/design_relationships.json", fallbackData.designRelationships),
     loadJson("data/project_concept_mapping.json", fallbackData.projectConceptMapping),
     loadJson("data/planting_strategy_mapping.json", fallbackData.plantingStrategyMapping),
     loadJson("data/spatial_archetypes.json", fallbackData.spatialArchetypes),
     loadJson("data/design_decision_rules.json", fallbackData.designDecisionRules),
-    loadJson("data/strategy_weight_bias.json", fallbackData.strategyWeightBias)
+    loadJson("data/strategy_weight_bias.json", fallbackData.strategyWeightBias),
+    loadJson("data/strategy_compatibility.json", fallbackData.strategyCompatibility)
   ]);
-  return { designRelationships, projectConceptMapping, plantingStrategyMapping, spatialArchetypes, designDecisionRules, strategyWeightBias };
+  return { designRelationships, projectConceptMapping, plantingStrategyMapping, spatialArchetypes, designDecisionRules, strategyWeightBias, strategyCompatibility };
 }
 
 const uniq = (arr) => [...new Set(arr.filter(Boolean))];
@@ -53,6 +55,50 @@ function accumulateBias(target, biasSet = {}, sourceLabel) {
 }
 
 function clampScore(score) { return Math.max(0, Math.min(100, score)); }
+const getRelation = (matrix, source, target) => {
+  const info = matrix[source] || {};
+  if ((info.compatible || []).includes(target)) return "compatible";
+  if ((info.conflict || []).includes(target)) return "conflict";
+  return null;
+};
+
+function applyCompatibilityRefinement(weighted, matrix = {}) {
+  const refinedMap = Object.fromEntries(weighted.map((item) => [item.concept, { ...item, score: item.score, reasons: [...item.reasons] }]));
+  const topCandidates = weighted.slice(0, 8);
+  const relationEvents = [];
+  for (let i = 0; i < topCandidates.length; i += 1) {
+    for (let j = i + 1; j < topCandidates.length; j += 1) {
+      const a = topCandidates[i].concept;
+      const b = topCandidates[j].concept;
+      const relation = getRelation(matrix, a, b) || getRelation(matrix, b, a);
+      if (!relation) continue;
+      if (relation === "compatible") {
+        const bonus = 7;
+        refinedMap[a].score += bonus;
+        refinedMap[b].score += bonus;
+        refinedMap[a].reasons.push(`compatibility +${bonus} (${b})`);
+        refinedMap[b].reasons.push(`compatibility +${bonus} (${a})`);
+        relationEvents.push({ a, b, relation, label: "High Compatibility", impact: `+${bonus}` });
+      } else {
+        const aWeight = refinedMap[a].score;
+        const bWeight = refinedMap[b].score;
+        const dominant = aWeight >= bWeight ? a : b;
+        const subordinate = dominant === a ? b : a;
+        const dominantPenalty = 12;
+        const subordinatePenalty = 18;
+        refinedMap[dominant].score -= dominantPenalty;
+        refinedMap[subordinate].score -= subordinatePenalty;
+        refinedMap[dominant].reasons.push(`conflict -${dominantPenalty} (${subordinate})`);
+        refinedMap[subordinate].reasons.push(`conflict -${subordinatePenalty} (${dominant})`);
+        relationEvents.push({ a: dominant, b: subordinate, relation, label: "Conflict Detected", impact: `-${dominantPenalty}/-${subordinatePenalty}` });
+      }
+    }
+  }
+  const refined = Object.values(refinedMap)
+    .map((item) => ({ ...item, score: clampScore(item.score) }))
+    .sort((a, b) => b.score - a.score);
+  return { refined, relationEvents };
+}
 
 function computeWeights(input, db, rule) {
   const weights = {};
@@ -96,13 +142,14 @@ function toHierarchy(weighted) {
 function recommend(input, db) {
   const rule = db.designDecisionRules.find((r) => r.project_type === input.projectType) || db.designDecisionRules[0];
   const weightedConcepts = computeWeights(input, db, rule);
-  const hierarchy = toHierarchy(weightedConcepts);
+  const compatibilityResult = applyCompatibilityRefinement(weightedConcepts, db.strategyCompatibility);
+  const hierarchy = toHierarchy(compatibilityResult.refined);
 
   const primaryDesignLanguage = hierarchy.primary.map((v) => `${v.concept} ${v.score}`);
   const secondaryDesignLanguage = hierarchy.secondary.map((v) => `${v.concept} ${v.score}`).slice(0, 4);
   const emotionalLayer = hierarchy.supporting.map((v) => `${v.concept} ${v.score}`).slice(0, 6);
 
-  const topConcepts = weightedConcepts.filter((w) => w.score >= 50).slice(0, 8).map((w) => w.concept);
+  const topConcepts = compatibilityResult.refined.filter((w) => w.score >= 50).slice(0, 8).map((w) => w.concept);
   const mappedPlanting = topConcepts.map((c) => db.plantingStrategyMapping.find((p) => p.concept === c)?.planting_strategies || []).flat();
 
   const archetypes = uniq((rule?.recommended_archetypes || []).concat(
@@ -110,10 +157,12 @@ function recommend(input, db) {
     input.conditions.includes("보행 연결 중요") ? ["Immersive Walk Garden"] : []
   )).slice(0, 4);
 
-  const primaryCore = hierarchy.primary[0] || weightedConcepts[0];
+  const primaryCore = hierarchy.primary[0] || compatibilityResult.refined[0];
   const secondaryPair = hierarchy.secondary.slice(0, 2);
   const dominantSummary = `이 프로젝트는 ${primaryCore.concept} 중심 전략(${primaryCore.score})이 가장 강하게 도출되며, ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join("와 ") || "보조 전략"}가 보행 흐름과 체류 경험을 보완합니다.`;
-  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다.`;
+  const compatibilityHighlights = compatibilityResult.relationEvents.slice(0, 4)
+    .map((event) => `${event.a} ↔ ${event.b} (${event.label})`).join(", ");
+  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략 dominance는 낮추고 조화 전략 dominance는 강화했습니다.`;
 
   return {
     primaryDesignLanguage,
@@ -121,7 +170,8 @@ function recommend(input, db) {
     emotionalLayer,
     dominantSummary,
     recommendationReason: reason,
-    weightedConcepts,
+    weightedConcepts: compatibilityResult.refined,
+    compatibilityAnalysis: compatibilityResult.relationEvents,
     archetypes,
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
@@ -147,6 +197,9 @@ function renderWeightRows(items) {
 }
 
 function renderResult(rec) {
+  const compatibilityRows = rec.compatibilityAnalysis.length
+    ? rec.compatibilityAnalysis.map((item) => `<li class="compatibility-item ${item.relation}"><strong>${item.a} ↔ ${item.b}</strong> : ${item.label} <span class="impact">${item.impact}</span></li>`).join("")
+    : "<li class='compatibility-item neutral'>상위 전략 간 명시적 compatibility/conflict 관계가 없습니다.</li>";
   document.getElementById("result").innerHTML = `
     <div class="result-grid">
       <article class="result-card full-width summary-card"><h3>1. Dominant Strategy Summary</h3><p>${rec.dominantSummary}</p></article>
@@ -154,9 +207,10 @@ function renderResult(rec) {
       <article class="result-card secondary-card"><h3>3. Secondary Design Language</h3><div class="secondary-items">${rec.secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${item}</span>`).join("") || "<span class='secondary-pill'>No secondary</span>"}</div></article>
       <article class="result-card emotion-card"><h3>4. Supporting Emotional Layer</h3><div class="emotion-tags">${rec.emotionalLayer.map((item) => `<span class="emotion-tag">${item}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
       <article class="result-card full-width"><h3>5. Strategy Weight Inference</h3>${renderWeightRows(rec.weightedConcepts.filter((w) => w.score >= 45).slice(0, 12))}</article>
-      <article class="result-card full-width"><h3>6. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
-      <article class="result-card full-width"><h3>7. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
-      <article class="result-card full-width"><h3>8. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
+      <article class="result-card full-width"><h3>6. Strategy Compatibility Analysis</h3><ul class="compatibility-list">${compatibilityRows}</ul></article>
+      <article class="result-card full-width"><h3>7. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
+      <article class="result-card full-width"><h3>8. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
+      <article class="result-card full-width"><h3>9. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
     </div>`;
 }
 
