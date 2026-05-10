@@ -133,3 +133,43 @@ ul { padding-left: 1.1rem; margin: 0; }
 @media (max-width: 860px) {
   .result-grid { grid-template-columns: 1fr; }
 }
+
+.weight-row {
+  border: 1px solid #d9e4dd;
+  border-radius: 10px;
+  padding: 0.65rem;
+  margin-bottom: 0.55rem;
+  background: #fbfdfc;
+}
+.weight-row.primary { border-color: #3f6a56; background: #eef6f1; }
+.weight-row.secondary { border-color: #9fb7aa; }
+.weight-row.supporting { border-color: #c5d4cc; }
+.weight-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+.score-chip {
+  font-weight: 800;
+  background: #294a3a;
+  color: #fff;
+  padding: 0.15rem 0.52rem;
+  border-radius: 999px;
+  min-width: 2.4rem;
+  text-align: center;
+}
+.bar-track {
+  margin-top: 0.42rem;
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  background: #dbe7e0;
+  overflow: hidden;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #426f59, #6ca98a);
+}
+.weight-meta { color: #4e6257; font-size: 0.83rem; }

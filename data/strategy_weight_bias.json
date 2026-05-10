@@ -1,0 +1,145 @@
+{
+  "projectTypeBias": {
+    "Hospital": {
+      "Healing Flow": 25,
+      "Quiet Resort": 20,
+      "Layered Nature": 15
+    },
+    "Data Center": {
+      "Controlled Edge": 25,
+      "Linear Forest": 20,
+      "Spatial Buffer": 20
+    },
+    "Office Headquarters": {
+      "Urban Canopy": 25,
+      "Signature Plaza": 20,
+      "Controlled Curve": 10
+    },
+    "Mixed-use Complex": {
+      "Layered Experience": 25,
+      "Event Plaza": 20,
+      "Dynamic Flow": 20
+    }
+  },
+  "dominanceBoost": {
+    "Hospital": {
+      "Healing Flow": 18,
+      "Quiet Resort": 15
+    },
+    "Data Center": {
+      "Controlled Edge": 18,
+      "Spatial Buffer": 15
+    },
+    "Office Headquarters": {
+      "Urban Canopy": 18,
+      "Signature Plaza": 15
+    },
+    "Mixed-use Complex": {
+      "Layered Experience": 18,
+      "Dynamic Flow": 15
+    }
+  },
+  "urbanContextBias": {
+    "도심형": {
+      "Urban Canopy": 14,
+      "Signature Plaza": 10,
+      "Controlled Curve": 7
+    },
+    "산업단지형": {
+      "Controlled Edge": 12,
+      "Spatial Buffer": 12,
+      "Linear Forest": 10
+    },
+    "캠퍼스형": {
+      "Layered Nature": 11,
+      "Healing Flow": 8,
+      "Urban Canopy": 6
+    },
+    "주거복합형": {
+      "Quiet Resort": 9,
+      "Layered Experience": 11,
+      "Dynamic Flow": 8
+    },
+    "상업복합형": {
+      "Event Plaza": 13,
+      "Signature Plaza": 10,
+      "Dynamic Flow": 9
+    }
+  },
+  "toneBias": {
+    "Quiet Resort": {
+      "Quiet Resort": 16,
+      "Layered Nature": 9,
+      "Spatial Relief": 8
+    },
+    "Urban Forest": {
+      "Urban Canopy": 14,
+      "Linear Forest": 12,
+      "Layered Nature": 8
+    },
+    "Minimal Modern": {
+      "Controlled Curve": 12,
+      "Controlled Edge": 12,
+      "Framed Nature": 8
+    },
+    "Immersive Healing": {
+      "Healing Flow": 16,
+      "Spatial Relief": 10,
+      "Curved Transition": 9
+    },
+    "Signature Landmark": {
+      "Signature Plaza": 16,
+      "Event Plaza": 11,
+      "Sculpted Ground": 9
+    }
+  },
+  "maintenanceBias": {
+    "저관리": {
+      "Spatial Buffer": 9,
+      "Linear Forest": 7,
+      "Layered Nature": 6
+    },
+    "중관리": {
+      "Urban Canopy": 5,
+      "Layered Experience": 5,
+      "Controlled Curve": 4
+    },
+    "고관리": {
+      "Signature Plaza": 8,
+      "Event Plaza": 7,
+      "Curved Transition": 6
+    }
+  },
+  "conditionBias": {
+    "공개공지 포함": {
+      "Event Plaza": 18,
+      "Signature Plaza": 14,
+      "Urban Canopy": 8
+    },
+    "옥상정원 포함": {
+      "Layered Nature": 14,
+      "Spatial Relief": 10,
+      "Quiet Resort": 7
+    },
+    "피로티 하부 포함": {
+      "Spatial Buffer": 11,
+      "Controlled Edge": 9,
+      "Layered Nature": 7
+    },
+    "선큰공간 포함": {
+      "Spatial Relief": 13,
+      "Curved Transition": 9,
+      "Layered Experience": 8
+    },
+    "보행 연결 중요": {
+      "Dynamic Flow": 14,
+      "Controlled Curve": 10,
+      "Urban Canopy": 9
+    },
+    "조망 중요": {
+      "Framed Nature": 14,
+      "Signature Plaza": 9,
+      "Spatial Relief": 7
+    }
+  }
+}
