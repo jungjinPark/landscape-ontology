@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>조경 설계 전략 추천기 (프로토타입)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <p class="kicker">Landscape Ontology Prototype</p>
+      <h1>웹 기반 조경 설계 전략 추천기</h1>
+      <p class="subtitle">프로젝트 조건을 선택하면 설계 언어/공간 원형/식재 전략을 추천합니다.</p>
+    </header>
+
+    <section class="panel form-panel">
+      <h2>프로젝트 조건 입력</h2>
+      <form id="strategy-form">
+        <div class="field-grid">
+          <label>프로젝트 유형
+            <select id="projectType" required>
+              <option value="Office Headquarters">Office Headquarters</option>
+              <option value="Data Center">Data Center</option>
+              <option value="Hospital">Hospital</option>
+              <option value="Mixed-use Complex">Mixed-use Complex</option>
+            </select>
+          </label>
+
+          <label>도시 맥락
+            <select id="urbanContext" required>
+              <option value="도심형">도심형</option>
+              <option value="산업단지형">산업단지형</option>
+              <option value="캠퍼스형">캠퍼스형</option>
+              <option value="주거복합형">주거복합형</option>
+              <option value="상업복합형">상업복합형</option>
+            </select>
+          </label>
+
+          <label>원하는 감성 톤
+            <select id="tone" required>
+              <option value="Quiet Resort">Quiet Resort</option>
+              <option value="Urban Forest">Urban Forest</option>
+              <option value="Minimal Modern">Minimal Modern</option>
+              <option value="Immersive Healing">Immersive Healing</option>
+              <option value="Signature Landmark">Signature Landmark</option>
+            </select>
+          </label>
+
+          <label>유지관리 수준
+            <select id="maintenance" required>
+              <option value="저관리">저관리</option>
+              <option value="중관리" selected>중관리</option>
+              <option value="고관리">고관리</option>
+            </select>
+          </label>
+        </div>
+
+        <fieldset>
+          <legend>공간 조건 (복수 선택)</legend>
+          <div class="check-grid" id="conditions">
+            <label><input type="checkbox" value="공개공지 포함" />공개공지 포함</label>
+            <label><input type="checkbox" value="옥상정원 포함" />옥상정원 포함</label>
+            <label><input type="checkbox" value="피로티 하부 포함" />피로티 하부 포함</label>
+            <label><input type="checkbox" value="선큰공간 포함" />선큰공간 포함</label>
+            <label><input type="checkbox" value="보행 연결 중요" />보행 연결 중요</label>
+            <label><input type="checkbox" value="조망 중요" />조망 중요</label>
+          </div>
+        </fieldset>
+
+        <button type="submit">전략 추천 생성</button>
+      </form>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section class="panel result-panel">
+      <h2>추천 결과</h2>
+      <div id="result"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
