@@ -1,0 +1,157 @@
+[
+  {
+    "project_type": "Office Headquarters",
+    "site_conditions": [
+      "대형 건축 매스와 넓은 전면 공지가 맞닿아 외부공간이 경직되어 보이기 쉬운 업무 지구 맥락",
+      "출퇴근·점심·짧은 미팅이 반복되어 빠른 통과 동선과 체류 동선을 동시에 요구하는 운영 패턴",
+      "여름 열섬과 강한 일사로 인해 그늘 기반의 미기후 개선이 필수인 도심형 부지"
+    ],
+    "design_objectives": [
+      "도시형 숲 경험을 통해 기업 캠퍼스의 긴장감을 완화하고 업무 일상 속 회복 리듬을 만든다",
+      "직선 중심 질서를 유지하되 결절부에서 곡선 완충 전략을 적용해 보행 속도와 시선 전환을 부드럽게 조절한다",
+      "절제된 리조트 감성을 과장 없이 도입해 신뢰감 있는 프리미엄 브랜드 이미지를 형성한다"
+    ],
+    "recommended_concepts": [
+      "Urban Canopy",
+      "Linear Forest",
+      "Controlled Curve",
+      "Framed Nature",
+      "Spatial Relief",
+      "Quiet Resort"
+    ],
+    "recommended_archetypes": [
+      "Corporate Forest Campus",
+      "Urban Linear Plaza",
+      "Signature Arrival Plaza",
+      "Quiet Roof Garden"
+    ],
+    "spatial_strategies": [
+      "주 보행축은 Linear Forest로 설정해 교목 캐노피를 연속 배치하고, 건축 전면 광장과 출입 결절부는 Controlled Curve로 감속 전환시킨다",
+      "도착 광장은 Signature Arrival Plaza 구조를 적용해 하차·대기·분산 동선을 분리하고, Framed Nature로 파사드와 조응하는 시선축을 구성한다",
+      "점심·비공식 미팅 수요가 높은 구간은 Urban Linear Plaza로 계획하되, 경계부 완충녹지와 반음영 좌석으로 Spatial Relief를 강화한다",
+      "옥상 및 상부 휴게공간은 Quiet Roof Garden으로 연결해 저속 순환 동선과 차분한 체류 노드를 확보한다"
+    ],
+    "emotional_tones": [
+      "도시적이고 정제된 신뢰감",
+      "숲 속에서 일하는 안정감",
+      "절제된 리조트형 여유"
+    ]
+  },
+  {
+    "project_type": "Data Center",
+    "site_conditions": [
+      "보안·설비 중심의 폐쇄적 건축 외피로 인해 보행 체감이 단조롭고 긴장도가 높은 대형 인프라 부지",
+      "상시 운영 특성상 교대 인력의 짧은 휴식과 빠른 이동이 반복되는 24시간 사용 환경",
+      "설비 소음·열부하·바람 영향이 커서 다층 완충녹지와 안정적 미기후 제어가 필요한 조건"
+    ],
+    "design_objectives": [
+      "기능 중심 시설의 경직된 인상을 도시형 숲 레이어로 완충해 심리적 피로를 낮춘다",
+      "직선 관리 동선의 효율을 유지하면서 곡선 전환 구간으로 이동 긴장을 단계적으로 해소한다",
+      "과장되지 않은 Quiet Resort 톤을 도입해 고신뢰·고품질의 운영 이미지를 강화한다"
+    ],
+    "recommended_concepts": [
+      "Spatial Relief",
+      "Urban Canopy",
+      "Controlled Curve",
+      "Curved Transition",
+      "Framed Nature",
+      "Quiet Resort"
+    ],
+    "recommended_archetypes": [
+      "Corporate Forest Campus",
+      "Resort-style Open Space",
+      "Healing Courtyard",
+      "Quiet Roof Garden"
+    ],
+    "spatial_strategies": [
+      "설비동 외곽은 Urban Canopy 기반의 다층 식재 벨트로 계획해 소음·열·시각 자극을 1차 완충하고, 주요 출입축은 명확한 직선 구조로 유지한다",
+      "보행 결절과 휴게 포켓은 Controlled Curve + Curved Transition을 적용해 교대 동선의 급격한 리듬 변화를 완화한다",
+      "보안 영역과 일반 영역 사이에는 Framed Nature를 삽입해 시야는 관리하면서도 폐쇄감을 낮추는 선택적 경관 프레임을 만든다",
+      "휴게 데크·중정·옥상은 Resort-style Open Space 또는 Quiet Roof Garden으로 묶어 저채도 재료와 향·질감 식재 중심의 회복 노드를 구성한다"
+    ],
+    "emotional_tones": [
+      "차분하고 통제된 안정감",
+      "기계적 환경을 완충하는 자연 회복감",
+      "절제된 프리미엄 인프라 이미지"
+    ]
+  },
+  {
+    "project_type": "Hospital",
+    "site_conditions": [
+      "응급·외래·입원 동선이 중첩되어 이용자 스트레스와 방향 탐색 부담이 큰 의료 복합 환경",
+      "대기 시간이 길고 보호자 동반 체류가 많아 짧은 회복 산책과 정적 휴식 공간이 동시에 필요한 운영 조건",
+      "차량 접근과 서비스 동선이 빈번해 소음·시선·안전 완충을 위한 섬세한 경계 조정이 필수"
+    ],
+    "design_objectives": [
+      "Spatial Relief 중심의 치유 동선을 구축해 의료 환경의 심리적 긴장을 실질적으로 낮춘다",
+      "곡선 완충 전략으로 부서 간 전이 구간을 부드럽게 연결해 이동 불안을 줄인다",
+      "Quiet Resort 감성을 절제해 도입해 과도한 장식 없이 안온하고 신뢰감 있는 회복 분위기를 만든다"
+    ],
+    "recommended_concepts": [
+      "Spatial Relief",
+      "Curved Transition",
+      "Controlled Curve",
+      "Quiet Resort",
+      "Framed Nature",
+      "Urban Canopy"
+    ],
+    "recommended_archetypes": [
+      "Healing Courtyard",
+      "Resort-style Open Space",
+      "Immersive Walk Garden",
+      "Layered Terrace Garden",
+      "Quiet Roof Garden"
+    ],
+    "spatial_strategies": [
+      "외래·입원 핵심 접점은 Healing Courtyard로 계획해 짧고 완만한 순환 동선을 만들고, 저·중층 식재로 시야 자극을 낮춘다",
+      "건물 간 연결부는 Curved Transition을 우선 적용하고, 긴 복도형 외부동선 결절에는 Controlled Curve를 더해 방향 전환을 직관화한다",
+      "대기 밀도가 높은 구간은 Resort-style Open Space로 구성해 반음영 좌석, 향·질감 식재, 저채도 포장으로 정서적 피로를 낮춘다",
+      "재활·산책 수요 구간은 Immersive Walk Garden 또는 Layered Terrace Garden으로 계획해 단계적 보행 회복 경험을 제공한다"
+    ],
+    "emotional_tones": [
+      "안온하고 보호받는 안정감",
+      "호흡이 느려지는 회복감",
+      "절제된 치유형 리조트 분위기"
+    ]
+  },
+  {
+    "project_type": "Mixed-use Complex",
+    "site_conditions": [
+      "주거·상업·업무·문화 프로그램이 중첩되어 시간대별 이용 밀도와 동선 패턴이 크게 변하는 고밀 복합 부지",
+      "저층 가로 활성과 상부 프라이버시 요구가 공존해 수평·수직 레벨을 함께 조직해야 하는 조건",
+      "랜드마크성 공공공간 요구와 일상 체류 품질 요구가 동시에 높은 도시 중심지 맥락"
+    ],
+    "design_objectives": [
+      "활력 높은 도시 공공성과 일상적 회복 경험을 한 시스템 안에서 균형화한다",
+      "직선 도시축을 기반으로 하되 곡선 완충 전략을 결절부에 배치해 과밀 흐름을 부드럽게 분산한다",
+      "도시형 숲 경험과 절제된 리조트 감성을 결합해 방문자·거주자 모두에게 지속 가능한 체류 품질을 제공한다"
+    ],
+    "recommended_concepts": [
+      "Signature Pause",
+      "Sculpted Ground",
+      "Layered Experience",
+      "Controlled Curve",
+      "Urban Canopy",
+      "Quiet Resort",
+      "Framed Nature"
+    ],
+    "recommended_archetypes": [
+      "Urban Linear Plaza",
+      "Layered Terrace Garden",
+      "Immersive Walk Garden",
+      "Resort-style Open Space",
+      "Signature Arrival Plaza"
+    ],
+    "spatial_strategies": [
+      "도시 주축은 Urban Linear Plaza로 설정해 통과·체류 동선을 병렬화하고, 결절 광장마다 Signature Pause를 배치해 장소 인지점을 만든다",
+      "단차가 큰 구간은 Layered Terrace Garden + Sculpted Ground 조합으로 입체 순환 동선을 구성해 프로그램 충돌을 완화한다",
+      "주거·업무 연결 보행축은 Immersive Walk Garden으로 계획해 Urban Canopy와 Controlled Curve를 결합한 저속 몰입 동선을 형성한다",
+      "상업·커뮤니티 체류 노드는 Resort-style Open Space 톤으로 절제해 운영 밀도는 높이되 감성은 과밀해지지 않도록 조절한다"
+    ],
+    "emotional_tones": [
+      "도시적 활력과 질서의 공존",
+      "층위 있는 탐색의 즐거움",
+      "절제된 리조트형 체류 여유"
+    ]
+  }
+]
