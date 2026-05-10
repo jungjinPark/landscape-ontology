@@ -259,7 +259,8 @@ function recommend(input, db) {
   const compatibilityHighlights = compatibilityResult.relationEvents.slice(0, 4)
     .map((event) => `${event.a} ↔ ${event.b} (${event.label})`).join(", ");
   const scenario = buildSpatialScenario(input, compatibilityResult.refined);
-  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${input.conditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario.flowLabel} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario.zoneFlow}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
+  const safeConditions = Array.isArray(input?.conditions) ? input.conditions : []
+  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${safeConditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario?.flowLabel || "기본"} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario?.zoneFlow || "Public → Semi-public → Private"}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
 
   return {
     primaryDesignLanguage,
@@ -286,12 +287,12 @@ const safeArray = (value) => Array.isArray(value) ? value.filter((v) => v !== nu
 const asText = (value, fallback = "-") => (value === null || value === undefined || value === "") ? fallback : String(value);
 
 function renderWeightRows(items) {
-  return items.map((item, i) => {
+  return safeArray(items).map((item, i) => {
     const tier = item.score >= 85 ? "Primary" : item.score >= 65 ? "Secondary" : item.score >= 45 ? "Supporting" : "Low";
     return `<div class="weight-row ${tier.toLowerCase()}">
       <div class="weight-head"><strong>${i + 1}. ${item.concept}</strong><span class="score-chip">${item.score}</span></div>
       <div class="bar-track"><span class="bar-fill" style="width:${item.score}%;"></span></div>
-      <p class="weight-meta">${tier} · ${item.reasons.slice(-2).join(" / ")}</p>
+      <p class="weight-meta">${tier} · ${safeArray(item?.reasons).slice(-2).join(" / ") || "No explicit weight rule"}</p>
     </div>`;
   }).join("");
 }
@@ -328,7 +329,10 @@ function renderResult(rec) {
     scenarioMarkup = "<article class='result-card full-width'><h3>10. Spatial Experience Scenario</h3><p class='scenario-empty'>Spatial Scenario를 렌더링하는 중 오류가 발생했습니다. 다른 추천 결과는 계속 표시됩니다.</p></article>";
   }
 
-  document.getElementById("result").innerHTML = `
+  const resultNode = document.getElementById("result");
+  if (!resultNode) return;
+
+  resultNode.innerHTML = `
     <div class="result-grid">
       <article class="result-card full-width summary-card"><h3>1. Dominant Strategy Summary</h3><p>${asText(rec?.dominantSummary, "요약 정보가 없습니다.")}</p></article>
       <article class="result-card primary-card"><h3>2. Primary Design Language</h3><div class="primary-items">${primaryDesignLanguage.map((item) => `<span class="primary-pill">${asText(item)}</span>`).join("") || "<span class='primary-pill'>No primary available</span>"}</div></article>
