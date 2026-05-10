@@ -539,6 +539,67 @@ function renderWeightRows(items) {
   }).join("");
 }
 
+
+function renderBubbleSvg(bubbleSequence = [], layoutTone = "axis") {
+  const items = safeArray(bubbleSequence);
+  if (!items.length) return "<p>Bubble diagram 데이터가 없습니다.</p>";
+
+  const width = 940;
+  const height = 420;
+  const zoneY = { "Public": 96, "Semi-public": 210, "Private": 324 };
+  const zoneClass = { "Public": "public", "Semi-public": "semi", "Private": "private" };
+  const layoutOffsets = {
+    axis: [0, 0, 0, 0, 0, 0],
+    linear: [0, 0, 0, 0, 0, 0],
+    loop: [0, 34, -34, 30, -30, 0],
+    cluster: [-44, 44, -32, 32, -20, 20]
+  };
+  const baseSpacing = items.length > 1 ? (width - 180) / (items.length - 1) : 0;
+  const offsets = layoutOffsets[layoutTone] || layoutOffsets.axis;
+  const points = items.map((item, i) => {
+    const cx = 90 + (baseSpacing * i);
+    const cy = (zoneY[item.zone] || 210) + (offsets[i] || 0);
+    const ratio = Math.max(8, Math.round(item.ratio || 10));
+    const radius = 25 + (ratio * 0.65);
+    return { ...item, cx, cy, radius, zoneType: zoneClass[item.zone] || "semi" };
+  });
+
+  const links = points.slice(0, -1).map((p, i) => {
+    const next = points[i + 1];
+    return `<line x1="${p.cx + p.radius - 3}" y1="${p.cy}" x2="${next.cx - next.radius + 3}" y2="${next.cy}" class="bubble-link" marker-end="url(#flowArrow)" />`;
+  }).join("");
+
+  const bubbles = points.map((p, i) => {
+    const dominant = p.level === "xl" || p.level === "lg" ? " dominant" : "";
+    return `<g class="bubble-node ${p.zoneType}${dominant}" transform="translate(${p.cx},${p.cy})">
+      <circle r="${p.radius}" />
+      <text class="bubble-index" y="-${p.radius + 10}">${i + 1}</text>
+      <text class="bubble-name" y="2">${asText(p.name)}</text>
+      <text class="bubble-ratio-label" y="18">${Math.round(p.ratio || 0)}%</text>
+    </g>`;
+  }).join("");
+
+  return `<svg class="bubble-diagram-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Bubble diagram rendering">
+    <defs>
+      <marker id="flowArrow" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+        <path d="M0,0 L10,4 L0,8 Z" fill="#486d5a"></path>
+      </marker>
+    </defs>
+    <g class="zone-bands">
+      <rect x="0" y="50" width="${width}" height="92" class="zone-band public" />
+      <rect x="0" y="164" width="${width}" height="92" class="zone-band semi" />
+      <rect x="0" y="278" width="${width}" height="92" class="zone-band private" />
+    </g>
+    <g class="zone-labels">
+      <text x="16" y="72">PUBLIC</text>
+      <text x="16" y="186">SEMI-PUBLIC</text>
+      <text x="16" y="300">PRIVATE</text>
+    </g>
+    <g class="bubble-links">${links}</g>
+    <g class="bubble-nodes">${bubbles}</g>
+  </svg>`;
+}
+
 function renderResult(rec) {
   const compatibilityAnalysis = safeArray(rec?.compatibilityAnalysis);
   const compatibilityRows = compatibilityAnalysis.length
@@ -611,44 +672,17 @@ function renderResult(rec) {
           <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
         </div>`).join("") || "<p>추천 가능한 layout logic 결과가 없습니다.</p>"}</div></article>
       <article class="result-card full-width bubble-board ${asText(bubbleDiagram?.layoutTone, "axis")}"><h3>13. Bubble Diagram Structure</h3>
-      <p class="card-caption">Spatial Scenario + Space Allocation + Layout Logic를 구조 다이어그램으로 변환한 conceptual board입니다.</p>
+      <p class="card-caption">SVG 기반 bubble node + connection line + circulation flow + hierarchy + public/private zoning 시각화.</p>
       <p class="bubble-flow"><strong>${asText(bubbleDiagram?.primaryLayout, "-")}</strong> · ${asText(bubbleDiagram?.flow, "-")}</p>
-      <div class="bubble-main-sequence">
-        <div class="zone-tag public">PUBLIC</div>
-        ${bubbleSequence.map((item, idx) => `
-          <div class="sequence-wrap">
-            <div class="bubble-card ${asText(item?.level, "md")} ${asText(item?.zone, "Semi-public").toLowerCase().replace(/[^a-z]/g, "-")}">
-              <span class="bubble-role">${asText(item?.role)}</span>
-              <strong>${asText(item?.name)}</strong>
-              <span class="bubble-ratio">${Math.round(item?.ratio || 0)}%</span>
-            </div>
-            ${idx < bubbleSequence.length - 1 ? "<div class='bubble-arrow'>↓</div>" : ""}
-          </div>
-        `).join("")}
-        <div class="zone-tag private">PRIVATE</div>
-      </div>
-      <div class="bubble-spine">══════════ Main Circulation Spine ══════════</div>
+      <div class="bubble-svg-wrap">${renderBubbleSvg(bubbleSequence, asText(bubbleDiagram?.layoutTone, "axis"))}</div>
+      <div class="bubble-spine">Spatial Flow: Arrival ↓ Walk Spine ↓ Central Node ↓ Quiet Garden</div>
       <div class="bubble-hierarchy">
         <h4>Hierarchy (Dominant Bubbles)</h4>
         <div class="hierarchy-row">${safeArray(bubbleDiagram?.hierarchy).map((item, idx) => `
           <div class="hierarchy-node">${idx + 1}. ${asText(item?.name)} <span>${Math.round(item?.ratio || 0)}%</span></div>
         `).join("") || "<span>-</span>"}</div>
       </div>
-      <div class="bubble-zones">${bubbleZones.map((zone) => `
-        <section class="bubble-zone">
-          <h4>[ ${asText(zone?.zone).toUpperCase()} ]</h4>
-          <div class="bubble-column">${safeArray(zone?.items).map((item, idx) => `
-            <div class="bubble-wrap">
-              <div class="bubble-card ${asText(item?.level, "md")}">
-                <span class="bubble-role">${asText(item?.role)}</span>
-                <strong>${asText(item?.name)}</strong>
-                <span class="bubble-ratio">${Math.round(item?.ratio || 0)}%</span>
-              </div>
-              ${idx < safeArray(zone?.items).length - 1 ? "<div class='bubble-arrow'>↓</div>" : ""}
-            </div>
-          `).join("")}</div>
-        </section>
-      `).join("") || "<p>Bubble diagram 데이터가 없습니다.</p>"}</div></article>
+      <div class="bubble-zones">${bubbleZones.map((zone) => `<section class="bubble-zone"><h4>[ ${asText(zone?.zone).toUpperCase()} ]</h4><p>${safeArray(zone?.items).map((item) => `${asText(item?.name)} (${Math.round(item?.ratio || 0)}%)`).join(" · ")}</p></section>`).join("")}</div></article>
     </div>`;
 }
 

@@ -427,3 +427,34 @@ ul { padding-left: 1.1rem; margin: 0; }
   .bubble-board.loop .bubble-main-sequence .sequence-wrap:nth-child(even) { transform: none; }
   .bubble-spine { font-size: 0.8rem; }
 }
+
+
+.bubble-svg-wrap {
+  border: 1px solid #c6d6cd;
+  border-radius: 12px;
+  background: #fcfffd;
+  padding: 0.45rem;
+  overflow-x: auto;
+}
+.bubble-diagram-svg { width: 100%; min-width: 780px; height: auto; }
+.zone-band.public { fill: #edf8f1; }
+.zone-band.semi { fill: #f4f7f5; }
+.zone-band.private { fill: #eef1fb; }
+.zone-labels text {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  fill: #4c6759;
+}
+.bubble-link { stroke: #507462; stroke-width: 2.2; fill: none; }
+.bubble-node circle { fill: #f6fbf8; stroke: #8daea0; stroke-width: 1.8; }
+.bubble-node.public circle { fill: #dff1e7; stroke: #5f9a79; }
+.bubble-node.semi circle { fill: #edf3ef; stroke: #88a392; }
+.bubble-node.private circle { fill: #e6ebfb; stroke: #7d8fc8; }
+.bubble-node.dominant circle { stroke-width: 3.4; filter: drop-shadow(0 4px 8px rgba(44,74,60,0.18)); }
+.bubble-name { font-size: 11px; text-anchor: middle; font-weight: 700; fill: #1f3329; }
+.bubble-ratio-label { font-size: 11px; text-anchor: middle; fill: #315241; font-weight: 700; }
+.bubble-index { font-size: 10px; text-anchor: middle; fill: #5b7567; }
+@media (max-width: 860px) {
+  .bubble-diagram-svg { min-width: 640px; }
+}
