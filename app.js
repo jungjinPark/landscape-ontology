@@ -98,6 +98,56 @@ const maintenanceAllocationBias = {
   }
 };
 
+const layoutArchetypeCatalog = {
+  "Axis Campus Layout": {
+    description: "명확한 중심축과 상징적 진입 시퀀스를 기반으로 공공-준공공-사적 영역을 단계적으로 조직하는 배치 구조.",
+    tags: ["axis", "symbolic-entry", "spine", "ceremonial-sequence"]
+  },
+  "Loop Garden Layout": {
+    description: "순환형 보행 루프를 통해 회복·산책 경험을 반복적으로 제공하는 저속 순환형 조직 구조.",
+    tags: ["loop", "healing-walk", "slow-circulation", "repetitive-recovery"]
+  },
+  "Clustered Courtyard Layout": {
+    description: "다수의 중정/포켓 공간을 군집화하여 분산 체류와 미세한 프로그램 전이를 만드는 조직 구조.",
+    tags: ["cluster", "courtyard", "distributed-rest", "micro-zoning"]
+  },
+  "Linear Forest Spine": {
+    description: "선형 녹지 spine을 중심으로 이동성과 방향성을 극대화하는 고명료 보행 조직 구조.",
+    tags: ["linear", "forest-spine", "wayfinding", "main-circulation"]
+  },
+  "Distributed Pocket Garden": {
+    description: "작은 휴게 공간을 분산 배치해 자극을 낮추고 짧은 회복 접점을 자주 제공하는 조직 구조.",
+    tags: ["distributed", "pocket-garden", "low-stimulus", "decentralized-rest"]
+  },
+  "Terrace Layered Layout": {
+    description: "레벨 차를 활용해 테라스형 활동 레이어를 수평·수직으로 연결하는 다층 조직 구조.",
+    tags: ["terrace", "layered", "multi-level", "sectional-experience"]
+  },
+  "Central Commons Layout": {
+    description: "중앙 커먼즈를 중심 결절로 두고 주변 프로그램이 방사형/결절형으로 연계되는 조직 구조.",
+    tags: ["central-node", "commons", "event-core", "public-interface"]
+  }
+};
+
+const projectLayoutRules = {
+  "Office Headquarters": {
+    priorities: ["Axis Campus Layout", "Linear Forest Spine", "Central Commons Layout"],
+    guidance: "축형 + 상징적 진입 구조를 강화하고 메인 보행 spine의 방향성과 대표성을 우선합니다."
+  },
+  "Hospital": {
+    priorities: ["Loop Garden Layout", "Distributed Pocket Garden", "Clustered Courtyard Layout"],
+    guidance: "순환형 healing walk를 강화하고 저자극 분산형 휴게 구조를 우선 구성합니다."
+  },
+  "Data Center": {
+    priorities: ["Linear Forest Spine", "Clustered Courtyard Layout", "Axis Campus Layout"],
+    guidance: "보안 buffer + controlled circulation을 강화하며 단순·명확한 circulation 체계를 우선합니다."
+  },
+  "Mixed-use Complex": {
+    priorities: ["Central Commons Layout", "Terrace Layered Layout", "Clustered Courtyard Layout"],
+    guidance: "다중 결절 + 이벤트 중심 구조를 강화하고 공개공지 연계를 적극적으로 확보합니다."
+  }
+};
+
 function buildSpatialScenario(input, weightedConcepts) {
   const seeded = scenarioBiasByProjectType[input.projectType] || ["Arrival Plaza", "Canopy Walk", "Transition Curve Node", "Quiet Pocket Garden", "Roof Outlook Lounge"];
   const topConcepts = weightedConcepts.slice(0, 8).map((item) => item.concept);
@@ -180,6 +230,55 @@ function computeSpaceAllocation(input, scenario = { steps: [] }) {
       tags
     };
   }).sort((a, b) => b.ratio - a.ratio);
+}
+
+function deriveLayoutLogic(input, scenario = { steps: [] }) {
+  const steps = safeArray(scenario?.steps);
+  const names = steps.map((step) => asText(step?.name, ""));
+  const sequence = names.join(" → ");
+  const profile = projectLayoutRules[input.projectType] || { priorities: [], guidance: "" };
+
+  const scoreMap = {};
+  Object.keys(layoutArchetypeCatalog).forEach((name) => { scoreMap[name] = 0; });
+
+  const addScore = (layout, score) => { if (scoreMap[layout] !== undefined) scoreMap[layout] += score; };
+
+  profile.priorities.forEach((layout, index) => addScore(layout, 48 - (index * 8)));
+  names.forEach((name) => {
+    if (name.includes("Arrival") || name.includes("Signature")) addScore("Axis Campus Layout", 16);
+    if (name.includes("Linear") || name.includes("Walk") || name.includes("Spine")) addScore("Linear Forest Spine", 14);
+    if (name.includes("Healing") || name.includes("Slow")) addScore("Loop Garden Layout", 15);
+    if (name.includes("Quiet") || name.includes("Recovery") || name.includes("Pocket")) addScore("Distributed Pocket Garden", 13);
+    if (name.includes("Courtyard")) addScore("Clustered Courtyard Layout", 14);
+    if (name.includes("Terrace") || name.includes("Roof")) addScore("Terrace Layered Layout", 13);
+    if (name.includes("Event") || name.includes("Retail") || name.includes("Social") || name.includes("Node")) addScore("Central Commons Layout", 14);
+  });
+
+  if (input.projectType === "Data Center") {
+    addScore("Linear Forest Spine", 10);
+    addScore("Axis Campus Layout", 6);
+  }
+
+  const topLayouts = Object.entries(scoreMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([layout, score]) => ({ layout, score }));
+
+  const cards = topLayouts.map(({ layout, score }) => {
+    const meta = layoutArchetypeCatalog[layout];
+    return {
+      name: layout,
+      description: meta.description,
+      reason: `${profile.guidance} Spatial sequence "${sequence}"에서 파생된 동선/결절 패턴을 반영해 ${layout}의 적합도(${score})가 높게 계산되었습니다.`,
+      sequence,
+      tags: meta.tags
+    };
+  });
+
+  return {
+    cards,
+    diagram: sequence || "Arrival → Transition Spine → Central Node → Quiet Garden"
+  };
 }
 
 async function loadJson(path, fallback) {
@@ -353,6 +452,7 @@ function recommend(input, db) {
     .map((event) => `${event.a} ↔ ${event.b} (${event.label})`).join(", ");
   const scenario = buildSpatialScenario(input, compatibilityResult.refined);
   const spaceAllocation = computeSpaceAllocation(input, scenario);
+  const layoutLogic = deriveLayoutLogic(input, scenario);
   const safeConditions = Array.isArray(input?.conditions) ? input.conditions : []
   const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${safeConditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario?.flowLabel || "기본"} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario?.zoneFlow || "Public → Semi-public → Private"}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
 
@@ -367,6 +467,7 @@ function recommend(input, db) {
     archetypes,
     spatialScenario: scenario,
     spaceAllocation,
+    layoutLogic,
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
       "하부 식재 전략": uniq(mappedPlanting.filter((item) => item.includes("하부") || item.includes("층위"))).slice(0, 2),
@@ -405,6 +506,8 @@ function renderResult(rec) {
   const archetypes = safeArray(rec?.archetypes);
   const plantingStrategies = rec?.plantingStrategies && typeof rec.plantingStrategies === "object" ? rec.plantingStrategies : {};
   const spaceAllocation = safeArray(rec?.spaceAllocation);
+  const layoutLogicCards = safeArray(rec?.layoutLogic?.cards);
+  const layoutDiagram = asText(rec?.layoutLogic?.diagram, "-");
 
   let scenarioMarkup = "";
   try {
@@ -448,6 +551,16 @@ function renderResult(rec) {
           <p class="allocation-reason">${asText(item?.reason)}</p>
           <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
         </div>`).join("") || "<p>할당 데이터가 없습니다.</p>"}</div></article>
+      <article class="result-card full-width"><h3>12. Layout Logic Strategy</h3><p class="card-caption">Spatial Scenario + Space Allocation 결과를 기반으로 공간 조직 체계를 제안합니다.</p>
+      <p class="layout-diagram">Flow Diagram: <strong>${layoutDiagram}</strong></p>
+      <div class="layout-grid">${layoutLogicCards.map((item) => `
+        <div class="layout-card">
+          <h4>${asText(item?.name)}</h4>
+          <p>${asText(item?.description)}</p>
+          <p class="layout-reason"><strong>추천 이유:</strong> ${asText(item?.reason)}</p>
+          <p class="layout-sequence"><strong>연결 Spatial Sequence:</strong> ${asText(item?.sequence)}</p>
+          <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
+        </div>`).join("") || "<p>추천 가능한 layout logic 결과가 없습니다.</p>"}</div></article>
     </div>`;
 }
 
