@@ -471,9 +471,68 @@ function toHierarchy(weighted) {
   return { primary, secondary, supporting };
 }
 
+
+function applySiteInputAdjustments(weightedConcepts, input) {
+  const adjusted = weightedConcepts.map((w) => ({ ...w, reasons: [...safeArray(w.reasons)] }));
+  const add = (concept, delta, reason) => {
+    const t = adjusted.find((x) => x.concept === concept);
+    if (!t) return;
+    t.score = clampScore(t.score + delta);
+    t.reasons.push(reason);
+  };
+
+  const vf = safeArray(input.vehicleFlow);
+  const pf = safeArray(input.pedestrianFlow);
+  const bp = asText(input.buildingPlacement, "");
+
+  if (vf.length >= 3) {
+    add("Controlled Curve", 6, "site input: strong vehicle circulation");
+    add("Spatial Relief", 5, "site input: strong vehicle circulation");
+  }
+  if (vf.includes("소방차 동선 중요")) {
+    add("Controlled Edge", 7, "site input: fire truck route priority");
+    add("Spatial Buffer", 7, "site input: fire truck route priority");
+  }
+  if (bp === "중정형 배치") {
+    add("Quiet Resort", 8, "site input: courtyard building type");
+    add("Healing Flow", 6, "site input: courtyard building type");
+  }
+  if (bp === "분동형 배치") {
+    add("Linear Forest", 7, "site input: fragmented masses");
+    add("Urban Canopy", 5, "site input: fragmented masses");
+  }
+  if (pf.includes("공개공지 연결 중요")) {
+    add("Signature Plaza", 8, "site input: public plaza linkage");
+    add("Urban Canopy", 6, "site input: public plaza linkage");
+  }
+  if (pf.includes("옥상/피로티 연결 필요")) {
+    add("Layered Experience", 8, "site input: roof/piloti link");
+    add("Framed Nature", 5, "site input: roof/piloti link");
+  }
+
+  return adjusted.sort((a, b) => b.score - a.score);
+}
+
+function buildSiteAnalysisSummary(input, topConcepts) {
+  const area = Number(input.siteArea || 0);
+  const sizeText = area >= 50000 ? "대규모" : area >= 15000 ? "중대규모" : area > 0 ? "중소규모" : "면적 미입력";
+  const placement = asText(input.buildingPlacement, "배치 정보 미입력");
+  const vehicle = safeArray(input.vehicleFlow);
+  const walk = safeArray(input.pedestrianFlow);
+  const vehicleIntensity = vehicle.length >= 4 ? "차량동선 제약이 강한 편" : vehicle.length >= 2 ? "차량동선 제약이 중간 수준" : "차량동선 제약이 비교적 약한 편";
+
+  return {
+    scale: `${sizeText} 대상지로 해석되며 ${area ? `${area.toLocaleString()}㎡` : "정량 면적 정보는 보완 필요"} 기준으로 외부공간 밀도 조정이 필요합니다.`,
+    placement: `${placement} 조건에서 포켓/중정/축형 오픈스페이스 조합 가능성을 우선 검토합니다.`,
+    constraint: `${vehicleIntensity}으로 보행 및 휴게공간은 보차 분리, 완충녹지, 감속 결절 중심으로 계획합니다.`,
+    pedestrian: `${walk.join(", ") || "보행축 우선순위 미입력"}를 반영하여 주출입-공개공지-상부 연결축의 연속성을 강화합니다.`,
+    strategy: `추천 전략 방향은 ${safeArray(topConcepts).slice(0, 4).join(" / ")} 중심으로 설정됩니다.`
+  };
+}
+
 function recommend(input, db) {
   const rule = db.designDecisionRules.find((r) => r.project_type === input.projectType) || db.designDecisionRules[0];
-  const weightedConcepts = computeWeights(input, db, rule);
+  const weightedConcepts = applySiteInputAdjustments(computeWeights(input, db, rule), input);
   const compatibilityResult = applyCompatibilityRefinement(weightedConcepts, db.strategyCompatibility);
   const hierarchy = toHierarchy(compatibilityResult.refined);
 
@@ -499,7 +558,7 @@ function recommend(input, db) {
   const layoutLogic = deriveLayoutLogic(input, scenario);
   const bubbleDiagram = buildBubbleDiagramEngine(scenario, spaceAllocation, layoutLogic);
   const safeConditions = Array.isArray(input?.conditions) ? input.conditions : []
-  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${safeConditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario?.flowLabel || "기본"} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario?.zoneFlow || "Public → Semi-public → Private"}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
+  const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${safeConditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Site Input(배치:${asText(input.buildingPlacement,"-")}, 차량:${safeArray(input.vehicleFlow).length}개, 보행:${safeArray(input.pedestrianFlow).length}개)이 전략 가중치에 반영되었습니다. Spatial Scenario는 ${scenario?.flowLabel || "기본"} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario?.zoneFlow || "Public → Semi-public → Private"}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
 
   return {
     primaryDesignLanguage,
@@ -514,6 +573,7 @@ function recommend(input, db) {
     spaceAllocation,
     layoutLogic,
     bubbleDiagram,
+    siteAnalysisSummary: buildSiteAnalysisSummary(input, compatibilityResult.refined.map((v) => v.concept)),
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
       "하부 식재 전략": uniq(mappedPlanting.filter((item) => item.includes("하부") || item.includes("층위"))).slice(0, 2),
@@ -632,10 +692,10 @@ function renderResult(rec) {
       }).join("")
       : "<p class='scenario-empty'>Spatial Scenario 데이터가 없습니다.</p>";
 
-    scenarioMarkup = `<article class="result-card full-width"><h3>10. Spatial Experience Scenario</h3><div class="scenario-timeline">${stepMarkup}</div><p class="scenario-flow">Flow Sequence: ${asText(scenario?.flowLabel, "-")}</p><p class="scenario-flow">Zone Sequence: ${asText(scenario?.zoneFlow, "-")}</p></article>`;
+    scenarioMarkup = `<article class="result-card full-width"><h3>11. Spatial Experience Scenario</h3><div class="scenario-timeline">${stepMarkup}</div><p class="scenario-flow">Flow Sequence: ${asText(scenario?.flowLabel, "-")}</p><p class="scenario-flow">Zone Sequence: ${asText(scenario?.zoneFlow, "-")}</p></article>`;
   } catch (error) {
     console.error("Spatial Scenario render error:", error);
-    scenarioMarkup = "<article class='result-card full-width'><h3>10. Spatial Experience Scenario</h3><p class='scenario-empty'>Spatial Scenario를 렌더링하는 중 오류가 발생했습니다. 다른 추천 결과는 계속 표시됩니다.</p></article>";
+    scenarioMarkup = "<article class='result-card full-width'><h3>11. Spatial Experience Scenario</h3><p class='scenario-empty'>Spatial Scenario를 렌더링하는 중 오류가 발생했습니다. 다른 추천 결과는 계속 표시됩니다.</p></article>";
   }
 
   const resultNode = document.getElementById("result");
@@ -651,9 +711,10 @@ function renderResult(rec) {
       <article class="result-card full-width"><h3>6. Strategy Compatibility Analysis</h3><ul class="compatibility-list">${compatibilityRows}</ul></article>
       <article class="result-card full-width"><h3>7. Recommendation Reason</h3><p>${asText(rec?.recommendationReason, "추천 이유 정보가 없습니다.")}</p></article>
       <article class="result-card full-width"><h3>8. Recommended Spatial Archetypes</h3>${renderNestedList(archetypes)}</article>
-      <article class="result-card full-width"><h3>9. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(plantingStrategies).map(([title, items]) => renderCategoryBlock(title, safeArray(items))).join("")}</div></article>
+      <article class="result-card full-width"><h3>9. Site Analysis Summary</h3><div class="nested-grid"><div class="sub-card"><h4>대상지 규모 해석</h4><p>${asText(rec?.siteAnalysisSummary?.scale)}</p></div><div class="sub-card"><h4>건축물 배치 가능성</h4><p>${asText(rec?.siteAnalysisSummary?.placement)}</p></div><div class="sub-card"><h4>차량동선 제약</h4><p>${asText(rec?.siteAnalysisSummary?.constraint)}</p></div><div class="sub-card"><h4>보행축/공개공지 가능성</h4><p>${asText(rec?.siteAnalysisSummary?.pedestrian)}</p></div><div class="sub-card"><h4>추천 전략 방향</h4><p>${asText(rec?.siteAnalysisSummary?.strategy)}</p></div></div></article>
+      <article class="result-card full-width"><h3>10. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(plantingStrategies).map(([title, items]) => renderCategoryBlock(title, safeArray(items))).join("")}</div></article>
       ${scenarioMarkup}
-      <article class="result-card full-width"><h3>11. Space Allocation Strategy</h3><p class="card-caption">Spatial Experience Scenario 기반 기본계획 수준 공간 비중 제안</p>
+      <article class="result-card full-width"><h3>12. Space Allocation Strategy</h3><p class="card-caption">Spatial Experience Scenario 기반 기본계획 수준 공간 비중 제안</p>
       <div class="allocation-grid">${spaceAllocation.map((item) => `
         <div class="allocation-card">
           <div class="allocation-head"><strong>${asText(item?.name)}</strong><span class="allocation-range">${asText(item?.rangeLabel)}</span></div>
@@ -661,7 +722,7 @@ function renderResult(rec) {
           <p class="allocation-reason">${asText(item?.reason)}</p>
           <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
         </div>`).join("") || "<p>할당 데이터가 없습니다.</p>"}</div></article>
-      <article class="result-card full-width"><h3>12. Layout Logic Strategy</h3><p class="card-caption">Spatial Scenario + Space Allocation 결과를 기반으로 공간 조직 체계를 제안합니다.</p>
+      <article class="result-card full-width"><h3>13. Layout Logic Strategy</h3><p class="card-caption">Spatial Scenario + Space Allocation 결과를 기반으로 공간 조직 체계를 제안합니다.</p>
       <p class="layout-diagram">Flow Diagram: <strong>${layoutDiagram}</strong></p>
       <div class="layout-grid">${layoutLogicCards.map((item) => `
         <div class="layout-card">
@@ -671,7 +732,7 @@ function renderResult(rec) {
           <p class="layout-sequence"><strong>연결 Spatial Sequence:</strong> ${asText(item?.sequence)}</p>
           <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
         </div>`).join("") || "<p>추천 가능한 layout logic 결과가 없습니다.</p>"}</div></article>
-      <article class="result-card full-width bubble-board ${asText(bubbleDiagram?.layoutTone, "axis")}"><h3>13. Bubble Diagram Structure</h3>
+      <article class="result-card full-width bubble-board ${asText(bubbleDiagram?.layoutTone, "axis")}"><h3>14. Bubble Diagram Structure</h3>
       <p class="card-caption">SVG 기반 bubble node + connection line + circulation flow + hierarchy + public/private zoning 시각화.</p>
       <p class="bubble-flow"><strong>${asText(bubbleDiagram?.primaryLayout, "-")}</strong> · ${asText(bubbleDiagram?.flow, "-")}</p>
       <div class="bubble-svg-wrap">${renderBubbleSvg(bubbleSequence, asText(bubbleDiagram?.layoutTone, "axis"))}</div>
@@ -693,7 +754,13 @@ function renderResult(rec) {
   document.getElementById("strategy-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const input = {
+      projectName: document.getElementById("projectName").value,
+      siteAddress: document.getElementById("siteAddress").value,
+      siteArea: document.getElementById("siteArea").value,
       projectType: document.getElementById("projectType").value,
+      buildingPlacement: document.querySelector("input[name=\"buildingPlacement\"]:checked")?.value || "",
+      vehicleFlow: [...document.querySelectorAll("#vehicleFlow input:checked")].map((i) => i.value),
+      pedestrianFlow: [...document.querySelectorAll("#pedestrianFlow input:checked")].map((i) => i.value),
       urbanContext: document.getElementById("urbanContext").value,
       tone: document.getElementById("tone").value,
       maintenance: document.getElementById("maintenance").value,
@@ -701,5 +768,16 @@ function renderResult(rec) {
     };
     renderResult(recommend(input, db));
   });
-  renderResult(recommend({ projectType: "Office Headquarters", urbanContext: "도심형", tone: "Quiet Resort", maintenance: "중관리", conditions: ["보행 연결 중요", "공개공지 포함"] }, db));
+  document.getElementById("sitePlanImage").addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    const preview = document.getElementById("sitePlanPreview");
+    if (!preview) return;
+    if (!file) { preview.textContent = "이미지를 업로드하면 이곳에 브라우저 미리보기가 표시됩니다."; return; }
+    const ok = ["image/png", "image/jpeg", "image/jpg"].includes(file.type);
+    if (!ok) { preview.textContent = "PNG/JPG/JPEG 파일만 지원됩니다."; return; }
+    const reader = new FileReader();
+    reader.onload = () => { preview.innerHTML = `<img src="${reader.result}" alt="평면도 미리보기" />`; };
+    reader.readAsDataURL(file);
+  });
+  renderResult(recommend({ projectName: "샘플 프로젝트", siteAddress: "서울", siteArea: 24000, projectType: "Office Headquarters", buildingPlacement: "중앙배치", vehicleFlow:["전면 drop-off"], pedestrianFlow:["주출입구 연결 중요"], urbanContext: "도심형", tone: "Quiet Resort", maintenance: "중관리", conditions: ["보행 연결 중요", "공개공지 포함"] }, db));
 })();
