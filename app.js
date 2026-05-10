@@ -311,7 +311,7 @@ function buildBubbleDiagramEngine(scenario = { steps: [] }, allocation = [], lay
   const byZone = Object.entries(grouped)
     .filter(([, list]) => list.length)
     .sort((a, b) => (zoneRank[a[0]] || 99) - (zoneRank[b[0]] || 99))
-    .map(([zone, list]) => ({ zone, items: list.sort((x, y) => y.ratio - x.ratio) }));
+    .map(([zone, list]) => ({ zone, items: list.sort((x, y) => x.order - y.order) }));
 
   const flow = bubbles.map((b) => b.name).join(" → ");
   const layoutTone = {
@@ -321,7 +321,8 @@ function buildBubbleDiagramEngine(scenario = { steps: [] }, allocation = [], lay
     "Linear Forest Spine": "linear"
   }[primaryLayout] || "axis";
 
-  return { primaryLayout, layoutTone, byZone, bubbles, flow };
+  const hierarchy = [...bubbles].sort((a, b) => b.ratio - a.ratio).slice(0, 3);
+  return { primaryLayout, layoutTone, byZone, bubbles, flow, hierarchy };
 }
 
 async function loadJson(path, fallback) {
@@ -555,6 +556,7 @@ function renderResult(rec) {
   const layoutDiagram = asText(rec?.layoutLogic?.diagram, "-");
   const bubbleDiagram = rec?.bubbleDiagram || {};
   const bubbleZones = safeArray(bubbleDiagram?.byZone);
+  const bubbleSequence = safeArray(bubbleDiagram?.bubbles);
 
   let scenarioMarkup = "";
   try {
@@ -611,6 +613,27 @@ function renderResult(rec) {
       <article class="result-card full-width bubble-board ${asText(bubbleDiagram?.layoutTone, "axis")}"><h3>13. Bubble Diagram Structure</h3>
       <p class="card-caption">Spatial Scenario + Space Allocation + Layout Logic를 구조 다이어그램으로 변환한 conceptual board입니다.</p>
       <p class="bubble-flow"><strong>${asText(bubbleDiagram?.primaryLayout, "-")}</strong> · ${asText(bubbleDiagram?.flow, "-")}</p>
+      <div class="bubble-main-sequence">
+        <div class="zone-tag public">PUBLIC</div>
+        ${bubbleSequence.map((item, idx) => `
+          <div class="sequence-wrap">
+            <div class="bubble-card ${asText(item?.level, "md")} ${asText(item?.zone, "Semi-public").toLowerCase().replace(/[^a-z]/g, "-")}">
+              <span class="bubble-role">${asText(item?.role)}</span>
+              <strong>${asText(item?.name)}</strong>
+              <span class="bubble-ratio">${Math.round(item?.ratio || 0)}%</span>
+            </div>
+            ${idx < bubbleSequence.length - 1 ? "<div class='bubble-arrow'>↓</div>" : ""}
+          </div>
+        `).join("")}
+        <div class="zone-tag private">PRIVATE</div>
+      </div>
+      <div class="bubble-spine">══════════ Main Circulation Spine ══════════</div>
+      <div class="bubble-hierarchy">
+        <h4>Hierarchy (Dominant Bubbles)</h4>
+        <div class="hierarchy-row">${safeArray(bubbleDiagram?.hierarchy).map((item, idx) => `
+          <div class="hierarchy-node">${idx + 1}. ${asText(item?.name)} <span>${Math.round(item?.ratio || 0)}%</span></div>
+        `).join("") || "<span>-</span>"}</div>
+      </div>
       <div class="bubble-zones">${bubbleZones.map((zone) => `
         <section class="bubble-zone">
           <h4>[ ${asText(zone?.zone).toUpperCase()} ]</h4>
