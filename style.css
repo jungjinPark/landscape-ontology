@@ -312,6 +312,21 @@ ul { padding-left: 1.1rem; margin: 0; }
   background: linear-gradient(145deg, #f6faf7 0%, #edf4ef 100%);
   border-color: #c9d8cf;
 }
+.bubble-main-sequence {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+}
+.zone-tag {
+  font-size: 0.73rem;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 0.22rem 0.65rem;
+}
+.zone-tag.public { background: #e9f5ef; color: #20553a; border: 1px solid #8ec7a7; }
+.zone-tag.private { background: #eef0fb; color: #2d3b72; border: 1px solid #acb7e6; }
 .bubble-flow {
   margin: 0.25rem 0 0.85rem;
   padding: 0.5rem 0.65rem;
@@ -348,6 +363,9 @@ ul { padding-left: 1.1rem; margin: 0; }
   gap: 0.45rem;
   align-items: center;
 }
+.bubble-card.public { background: #edf8f2; border-color: #91c6a9; }
+.bubble-card.semi-public { background: #f3f6f4; border-color: #a9beb2; }
+.bubble-card.private { background: #eff2fd; border-color: #a8b2df; }
 .bubble-card.sm { transform: scale(0.95); }
 .bubble-card.md { transform: scale(1); }
 .bubble-card.lg { transform: scale(1.04); border-color: #8ead9c; background: #eaf4ee; }
@@ -366,10 +384,46 @@ ul { padding-left: 1.1rem; margin: 0; }
   font-weight: 700;
 }
 .bubble-arrow { color: #577466; font-weight: 700; }
+.bubble-spine {
+  text-align: center;
+  color: #476457;
+  font-weight: 700;
+  font-size: 0.86rem;
+  margin: 0.25rem 0 0.75rem;
+}
+.bubble-hierarchy {
+  border: 1px dashed #b2c5b9;
+  border-radius: 9px;
+  padding: 0.5rem 0.6rem;
+  background: #f8fcfa;
+  margin-bottom: 0.7rem;
+}
+.bubble-hierarchy h4 { margin: 0 0 0.42rem; font-size: 0.86rem; color: #304d3f; }
+.hierarchy-row { display: flex; gap: 0.42rem; flex-wrap: wrap; }
+.hierarchy-node {
+  background: #ecf4ef;
+  border: 1px solid #b9ccc1;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+}
+.hierarchy-node span { font-weight: 700; color: #234b38; }
 
 .bubble-board.axis .bubble-column { border-left: 2px solid #c2d6cb; padding-left: 0.5rem; }
+.bubble-board.axis .bubble-main-sequence { border-left: 3px solid #9db8aa; padding-left: 0.7rem; justify-items: start; }
 .bubble-board.loop .bubble-column .bubble-wrap:nth-child(even) .bubble-card { border-style: dashed; }
+.bubble-board.loop .bubble-main-sequence .sequence-wrap:nth-child(odd) { transform: translateX(-16px); }
+.bubble-board.loop .bubble-main-sequence .sequence-wrap:nth-child(even) { transform: translateX(16px); }
 .bubble-board.cluster .bubble-column { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .bubble-board.cluster .bubble-wrap { justify-items: stretch; }
 .bubble-board.cluster .bubble-arrow { display: none; }
+.bubble-board.cluster .bubble-main-sequence { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.bubble-board.cluster .zone-tag { grid-column: 1 / -1; justify-self: center; }
 .bubble-board.linear .bubble-card { border-radius: 10px; }
+.bubble-board.linear .bubble-main-sequence .bubble-card { width: min(100%, 500px); }
+
+@media (max-width: 700px) {
+  .bubble-board.loop .bubble-main-sequence .sequence-wrap:nth-child(odd),
+  .bubble-board.loop .bubble-main-sequence .sequence-wrap:nth-child(even) { transform: none; }
+  .bubble-spine { font-size: 0.8rem; }
+}
