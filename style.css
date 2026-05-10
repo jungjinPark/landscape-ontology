@@ -252,3 +252,34 @@ ul { padding-left: 1.1rem; margin: 0; }
   font-size: 0.8rem;
   font-weight: 600;
 }
+
+.allocation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.65rem;
+}
+.allocation-card {
+  border: 1px solid #d7e2db;
+  border-radius: 10px;
+  background: #f8fcfa;
+  padding: 0.7rem;
+}
+.allocation-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+}
+.allocation-range {
+  font-weight: 700;
+  color: #244233;
+}
+.allocation-track { margin-top: 0.5rem; height: 10px; }
+.allocation-fill {
+  background: linear-gradient(90deg, #2f5d47, #86b79d);
+}
+.allocation-reason {
+  margin: 0.55rem 0 0;
+  color: #476055;
+  font-size: 0.86rem;
+}

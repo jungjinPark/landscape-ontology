@@ -57,6 +57,47 @@ const scenarioBiasByProjectType = {
   "Mixed-use Complex": ["Event Plaza", "Retail Walk", "Layered Terrace", "Rooftop Social Garden"]
 };
 
+const spaceAllocationProfiles = {
+  "Office Headquarters": {
+    keywords: ["Arrival", "Plaza", "Canopy Walk", "Signature Node"],
+    eventPenalty: ["Event Plaza"],
+    reasons: "브랜드 아이덴티티와 대표 동선 경험 강화를 위해 진입 광장·캐노피 보행축·시그니처 결절의 비중을 높입니다."
+  },
+  "Hospital": {
+    keywords: ["Healing", "Recovery", "Quiet", "Therapy", "Slow"],
+    eventPenalty: ["Event Plaza", "Retail Walk"],
+    reasons: "회복 중심 동선 구성을 위해 Healing Walk/Recovery Garden/Quiet Rest 계열을 강화하고 과도한 이벤트 성격은 축소합니다."
+  },
+  "Data Center": {
+    keywords: ["Buffer", "Controlled", "Quiet", "Security", "Deck"],
+    eventPenalty: ["Event Plaza", "Rooftop Social Garden"],
+    reasons: "보안·완충 구조가 우선되는 시설 특성을 반영해 Buffer Planting, Controlled Walk, Quiet Deck 계열을 우선 배치합니다."
+  },
+  "Mixed-use Complex": {
+    keywords: ["Event", "Retail", "Layered", "Social", "Terrace"],
+    eventPenalty: [],
+    reasons: "복합 프로그램의 체류와 커뮤니티 활성화를 위해 Event Plaza, Retail Walk, Layered Terrace 비중을 높입니다."
+  }
+};
+
+const maintenanceAllocationBias = {
+  "저관리": {
+    reinforce: ["Canopy", "Buffer", "Controlled", "Linear", "Grass", "Quiet", "Deck"],
+    reduce: ["Event", "Plaza", "Fountain", "Floral", "Therapy Terrace", "Social"],
+    note: "저관리 기준으로 화려한 초화·이벤트 성격은 줄이고 구조적 식재·캐노피·그라스 성격을 강화했습니다."
+  },
+  "중관리": {
+    reinforce: [],
+    reduce: [],
+    note: "중관리 기준의 균형형 배분으로 특정 프로그램 편중 없이 공간 경험 흐름을 유지했습니다."
+  },
+  "고관리": {
+    reinforce: ["Signature", "Event", "Therapy Terrace", "Social", "Plaza"],
+    reduce: ["Controlled Edge"],
+    note: "고관리 기준으로 특화 식재·계절 초화·수경 연계 가능성이 높은 시퀀스의 비중을 일부 허용했습니다."
+  }
+};
+
 function buildSpatialScenario(input, weightedConcepts) {
   const seeded = scenarioBiasByProjectType[input.projectType] || ["Arrival Plaza", "Canopy Walk", "Transition Curve Node", "Quiet Pocket Garden", "Roof Outlook Lounge"];
   const topConcepts = weightedConcepts.slice(0, 8).map((item) => item.concept);
@@ -87,6 +128,58 @@ function buildSpatialScenario(input, weightedConcepts) {
   const flowLabel = steps.map((step) => step.phase).join(" → ");
   const zoneFlow = steps.map((step) => step.zone).join(" → ");
   return { steps, flowLabel, zoneFlow };
+}
+
+function deriveDesignTags(step = {}) {
+  const base = safeArray(step?.linkedStrategies?.length ? step.linkedStrategies : step.drivers);
+  const derived = [];
+  const text = `${step?.name || ""} ${step?.description || ""}`.toLowerCase();
+  if (text.includes("canopy") || text.includes("수관")) derived.push("canopy");
+  if (text.includes("quiet") || text.includes("회복") || text.includes("healing")) derived.push("healing");
+  if (text.includes("buffer") || text.includes("controlled") || text.includes("보안")) derived.push("buffer");
+  if (text.includes("event") || text.includes("social") || text.includes("retail")) derived.push("community");
+  return uniq(base.concat(derived));
+}
+
+function computeSpaceAllocation(input, scenario = { steps: [] }) {
+  const steps = safeArray(scenario?.steps);
+  if (!steps.length) return [];
+
+  const profile = spaceAllocationProfiles[input.projectType] || { keywords: [], eventPenalty: [], reasons: "" };
+  const maintenance = maintenanceAllocationBias[input.maintenance] || maintenanceAllocationBias["중관리"];
+
+  const baseWeights = steps.map((step) => {
+    const name = asText(step?.name, "");
+    const text = `${name} ${asText(step?.description, "")}`;
+    let score = 1;
+
+    profile.keywords.forEach((keyword) => { if (text.includes(keyword)) score += 0.55; });
+    maintenance.reinforce.forEach((keyword) => { if (text.includes(keyword)) score += 0.35; });
+    maintenance.reduce.forEach((keyword) => { if (text.includes(keyword)) score -= 0.28; });
+    profile.eventPenalty.forEach((keyword) => { if (text.includes(keyword)) score -= 0.22; });
+
+    if ((step?.zone || "") === "Public") score += 0.15;
+    if ((step?.phase || "") === "Transition") score += 0.12;
+
+    const adjusted = Math.max(0.5, score);
+    return { step, score: adjusted };
+  });
+
+  const total = baseWeights.reduce((sum, item) => sum + item.score, 0) || 1;
+
+  return baseWeights.map(({ step, score }) => {
+    const ratio = (score / total) * 100;
+    const min = Math.max(5, Math.round(ratio - 3));
+    const max = Math.min(45, Math.round(ratio + 4));
+    const tags = deriveDesignTags(step);
+    return {
+      name: asText(step?.name, "Unnamed Space"),
+      ratio,
+      rangeLabel: `${min}~${max}%`,
+      reason: `${profile.reasons} ${maintenance.note}`.trim(),
+      tags
+    };
+  }).sort((a, b) => b.ratio - a.ratio);
 }
 
 async function loadJson(path, fallback) {
@@ -259,6 +352,7 @@ function recommend(input, db) {
   const compatibilityHighlights = compatibilityResult.relationEvents.slice(0, 4)
     .map((event) => `${event.a} ↔ ${event.b} (${event.label})`).join(", ");
   const scenario = buildSpatialScenario(input, compatibilityResult.refined);
+  const spaceAllocation = computeSpaceAllocation(input, scenario);
   const safeConditions = Array.isArray(input?.conditions) ? input.conditions : []
   const reason = `${input.projectType} + ${input.urbanContext} 맥락 + ${safeConditions.join(" + ") || "기본 오픈스페이스"} + ${input.tone} 톤 + ${input.maintenance} 유지관리 조건으로 ${primaryCore.concept}의 weight(${primaryCore.score})가 가장 높게 산정되었습니다. ${secondaryPair.map((v) => `${v.concept}(${v.score})`).join(" / ") || "Secondary 전략"}는 결절부 감속, 공공성, 미기후 전환을 보완하는 보조 전략으로 적용됩니다. Spatial Scenario는 ${scenario?.flowLabel || "기본"} 흐름으로 구성되어 Arrival-Transition-Rest-View-Exit 리듬을 기본으로 설계되었습니다. 주 보행축은 Urban Canopy 기반의 연속 수관 흐름으로 구성되며, 결절부에서는 Controlled Curve 전략을 통해 체류와 감속 경험을 유도합니다. 존 전이는 ${scenario?.zoneFlow || "Public → Semi-public → Private"}로 설정되어 Public → Semi-public → Private 경험 레이어를 명확히 합니다. Compatibility refinement 결과 ${compatibilityHighlights || "주요 전략 간 중립 관계"}가 반영되어 충돌 전략은 우선순위에서 의도적으로 감점되어 과도한 병치가 억제됩니다.`;
 
@@ -272,6 +366,7 @@ function recommend(input, db) {
     compatibilityAnalysis: compatibilityResult.relationEvents,
     archetypes,
     spatialScenario: scenario,
+    spaceAllocation,
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
       "하부 식재 전략": uniq(mappedPlanting.filter((item) => item.includes("하부") || item.includes("층위"))).slice(0, 2),
@@ -309,6 +404,7 @@ function renderResult(rec) {
   const weightedConcepts = safeArray(rec?.weightedConcepts);
   const archetypes = safeArray(rec?.archetypes);
   const plantingStrategies = rec?.plantingStrategies && typeof rec.plantingStrategies === "object" ? rec.plantingStrategies : {};
+  const spaceAllocation = safeArray(rec?.spaceAllocation);
 
   let scenarioMarkup = "";
   try {
@@ -344,6 +440,14 @@ function renderResult(rec) {
       <article class="result-card full-width"><h3>8. Recommended Spatial Archetypes</h3>${renderNestedList(archetypes)}</article>
       <article class="result-card full-width"><h3>9. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(plantingStrategies).map(([title, items]) => renderCategoryBlock(title, safeArray(items))).join("")}</div></article>
       ${scenarioMarkup}
+      <article class="result-card full-width"><h3>11. Space Allocation Strategy</h3><p class="card-caption">Spatial Experience Scenario 기반 기본계획 수준 공간 비중 제안</p>
+      <div class="allocation-grid">${spaceAllocation.map((item) => `
+        <div class="allocation-card">
+          <div class="allocation-head"><strong>${asText(item?.name)}</strong><span class="allocation-range">${asText(item?.rangeLabel)}</span></div>
+          <div class="bar-track allocation-track"><span class="bar-fill allocation-fill" style="width:${Math.max(8, Math.round(item?.ratio || 0))}%;"></span></div>
+          <p class="allocation-reason">${asText(item?.reason)}</p>
+          <div class="scenario-tags">${safeArray(item?.tags).map((tag) => `<span class="scenario-tag">${asText(tag)}</span>`).join("")}</div>
+        </div>`).join("") || "<p>할당 데이터가 없습니다.</p>"}</div></article>
     </div>`;
 }
 
