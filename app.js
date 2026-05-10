@@ -280,8 +280,10 @@ function recommend(input, db) {
   };
 }
 
-function renderNestedList(items) { return `<ul>${items.map((v) => `<li>${v}</li>`).join("")}</ul>`; }
+function renderNestedList(items) { const list = safeArray(items); return `<ul>${list.map((v) => `<li>${asText(v)}</li>`).join("")}</ul>`; }
 function renderCategoryBlock(title, items) { return `<div class="sub-card"><h4>${title}</h4>${renderNestedList(items)}</div>`; }
+const safeArray = (value) => Array.isArray(value) ? value.filter((v) => v !== null && v !== undefined) : [];
+const asText = (value, fallback = "-") => (value === null || value === undefined || value === "") ? fallback : String(value);
 
 function renderWeightRows(items) {
   return items.map((item, i) => {
@@ -295,21 +297,49 @@ function renderWeightRows(items) {
 }
 
 function renderResult(rec) {
-  const compatibilityRows = rec.compatibilityAnalysis.length
-    ? rec.compatibilityAnalysis.map((item) => `<li class="compatibility-item ${item.relation}"><strong>${item.a} ↔ ${item.b}</strong> : ${item.label} <span class="impact">${item.impact}</span></li>`).join("")
+  const compatibilityAnalysis = safeArray(rec?.compatibilityAnalysis);
+  const compatibilityRows = compatibilityAnalysis.length
+    ? compatibilityAnalysis.map((item) => `<li class="compatibility-item ${asText(item?.relation, "neutral")}"><strong>${asText(item?.a)} ↔ ${asText(item?.b)}</strong> : ${asText(item?.label)} <span class="impact">${asText(item?.impact, "")}</span></li>`).join("")
     : "<li class='compatibility-item neutral'>상위 전략 간 명시적 compatibility/conflict 관계가 없습니다.</li>";
+
+  const primaryDesignLanguage = safeArray(rec?.primaryDesignLanguage);
+  const secondaryDesignLanguage = safeArray(rec?.secondaryDesignLanguage);
+  const emotionalLayer = safeArray(rec?.emotionalLayer);
+  const weightedConcepts = safeArray(rec?.weightedConcepts);
+  const archetypes = safeArray(rec?.archetypes);
+  const plantingStrategies = rec?.plantingStrategies && typeof rec.plantingStrategies === "object" ? rec.plantingStrategies : {};
+
+  let scenarioMarkup = "";
+  try {
+    const scenario = rec?.spatialScenario || {};
+    const steps = safeArray(scenario?.steps);
+    const stepMarkup = steps.length
+      ? steps.map((step, i) => {
+        const linked = safeArray(step?.linkedStrategies);
+        const drivers = safeArray(step?.drivers);
+        const tags = (linked.length ? linked : drivers).map((strategy) => `<span class="scenario-tag">${asText(strategy)}</span>`).join("");
+        return `<div class="scenario-step"><div class="scenario-index">${i + 1}</div><div><h4>${asText(step?.name, `Step ${i + 1}`)}</h4><p>${asText(step?.description, "설명이 제공되지 않았습니다.")}</p><p class="scenario-meta">Flow: ${asText(step?.phase)} · Zone: ${asText(step?.zone)}</p><div class="scenario-tags">${tags}</div></div></div>`;
+      }).join("")
+      : "<p class='scenario-empty'>Spatial Scenario 데이터가 없습니다.</p>";
+
+    scenarioMarkup = `<article class="result-card full-width"><h3>10. Spatial Experience Scenario</h3><div class="scenario-timeline">${stepMarkup}</div><p class="scenario-flow">Flow Sequence: ${asText(scenario?.flowLabel, "-")}</p><p class="scenario-flow">Zone Sequence: ${asText(scenario?.zoneFlow, "-")}</p></article>`;
+  } catch (error) {
+    console.error("Spatial Scenario render error:", error);
+    scenarioMarkup = "<article class='result-card full-width'><h3>10. Spatial Experience Scenario</h3><p class='scenario-empty'>Spatial Scenario를 렌더링하는 중 오류가 발생했습니다. 다른 추천 결과는 계속 표시됩니다.</p></article>";
+  }
+
   document.getElementById("result").innerHTML = `
     <div class="result-grid">
-      <article class="result-card full-width summary-card"><h3>1. Dominant Strategy Summary</h3><p>${rec.dominantSummary}</p></article>
-      <article class="result-card primary-card"><h3>2. Primary Design Language</h3><div class="primary-items">${rec.primaryDesignLanguage.map((item) => `<span class="primary-pill">${item}</span>`).join("") || "<span class='primary-pill'>No primary available</span>"}</div></article>
-      <article class="result-card secondary-card"><h3>3. Secondary Design Language</h3><div class="secondary-items">${rec.secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${item}</span>`).join("") || "<span class='secondary-pill'>No secondary</span>"}</div></article>
-      <article class="result-card emotion-card"><h3>4. Supporting Emotional Layer</h3><div class="emotion-tags">${rec.emotionalLayer.map((item) => `<span class="emotion-tag">${item}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
-      <article class="result-card full-width"><h3>5. Strategy Weight Inference</h3>${renderWeightRows(rec.weightedConcepts.filter((w) => w.score >= 45).slice(0, 12))}</article>
+      <article class="result-card full-width summary-card"><h3>1. Dominant Strategy Summary</h3><p>${asText(rec?.dominantSummary, "요약 정보가 없습니다.")}</p></article>
+      <article class="result-card primary-card"><h3>2. Primary Design Language</h3><div class="primary-items">${primaryDesignLanguage.map((item) => `<span class="primary-pill">${asText(item)}</span>`).join("") || "<span class='primary-pill'>No primary available</span>"}</div></article>
+      <article class="result-card secondary-card"><h3>3. Secondary Design Language</h3><div class="secondary-items">${secondaryDesignLanguage.map((item) => `<span class="secondary-pill">${asText(item)}</span>`).join("") || "<span class='secondary-pill'>No secondary</span>"}</div></article>
+      <article class="result-card emotion-card"><h3>4. Supporting Emotional Layer</h3><div class="emotion-tags">${emotionalLayer.map((item) => `<span class="emotion-tag">${asText(item)}</span>`).join("") || "<span class='emotion-tag'>No supporting layer</span>"}</div></article>
+      <article class="result-card full-width"><h3>5. Strategy Weight Inference</h3>${renderWeightRows(weightedConcepts.filter((w) => (w?.score || 0) >= 45).slice(0, 12))}</article>
       <article class="result-card full-width"><h3>6. Strategy Compatibility Analysis</h3><ul class="compatibility-list">${compatibilityRows}</ul></article>
-      <article class="result-card full-width"><h3>7. Spatial Experience Scenario</h3><div class="scenario-timeline">${rec.spatialScenario.steps.map((step, i) => `<div class="scenario-step"><div class="scenario-index">${i+1}</div><div><h4>${step.name}</h4><p>${step.description}</p><p class="scenario-meta">Flow: ${step.phase} · Zone: ${step.zone}</p><div class="scenario-tags">${(step.linkedStrategies.length ? step.linkedStrategies : step.drivers).map((strategy) => `<span class="scenario-tag">${strategy}</span>`).join("")}</div></div></div>`).join("")}</div><p class="scenario-flow">Flow Sequence: ${rec.spatialScenario.flowLabel}</p><p class="scenario-flow">Zone Sequence: ${rec.spatialScenario.zoneFlow}</p></article>
-      <article class="result-card full-width"><h3>8. Recommendation Reason</h3><p>${rec.recommendationReason}</p></article>
-      <article class="result-card full-width"><h3>9. Recommended Spatial Archetypes</h3>${renderNestedList(rec.archetypes)}</article>
-      <article class="result-card full-width"><h3>10. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(rec.plantingStrategies).map(([title, items]) => renderCategoryBlock(title, items)).join("")}</div></article>
+      <article class="result-card full-width"><h3>7. Recommendation Reason</h3><p>${asText(rec?.recommendationReason, "추천 이유 정보가 없습니다.")}</p></article>
+      <article class="result-card full-width"><h3>8. Recommended Spatial Archetypes</h3>${renderNestedList(archetypes)}</article>
+      <article class="result-card full-width"><h3>9. Recommended Planting Strategy</h3><div class="nested-grid">${Object.entries(plantingStrategies).map(([title, items]) => renderCategoryBlock(title, safeArray(items))).join("")}</div></article>
+      ${scenarioMarkup}
     </div>`;
 }
 
