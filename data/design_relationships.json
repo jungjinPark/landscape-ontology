@@ -1,0 +1,74 @@
+[
+  {
+    "source": "Controlled Curve",
+    "target": "Curved Transition",
+    "relationship": "supports",
+    "description": "직선 중심 공간에서 부분적 곡선을 적용하는 Controlled Curve는 전환 구간을 부드럽게 연결하는 Curved Transition의 구현 기반을 제공한다."
+  },
+  {
+    "source": "Controlled Curve",
+    "target": "Spatial Relief",
+    "relationship": "creates",
+    "description": "곡선을 통한 흐름 완화는 보행 속도를 낮추고 공간 긴장을 조절해 심리적 완충감인 Spatial Relief를 형성한다."
+  },
+  {
+    "source": "Curved Transition",
+    "target": "Quiet Resort",
+    "relationship": "enhances",
+    "description": "Curved Transition의 자연스러운 시선 이동과 완만한 동선은 Quiet Resort가 지향하는 차분한 체류 분위기를 강화한다."
+  },
+  {
+    "source": "Sculpted Ground",
+    "target": "Layered Experience",
+    "relationship": "creates",
+    "description": "레벨과 포장 패턴을 조형적으로 다루는 Sculpted Ground는 보행·시선·공간이 중첩되는 Layered Experience를 직접 만들어낸다."
+  },
+  {
+    "source": "Sculpted Ground",
+    "target": "Signature Pause",
+    "relationship": "supports",
+    "description": "입체적 지형과 포장 연출은 머무름 지점의 상징성과 장소성을 높여 Signature Pause의 기억점을 뒷받침한다."
+  },
+  {
+    "source": "Layered Experience",
+    "target": "Signature Pause",
+    "relationship": "strengthens",
+    "description": "다층적 시퀀스 속에서 등장하는 체류 지점은 대비와 집중을 통해 Signature Pause의 인지성과 경험 밀도를 높인다."
+  },
+  {
+    "source": "Urban Canopy",
+    "target": "Linear Forest",
+    "relationship": "extends",
+    "description": "Urban Canopy의 숲 경험 전략은 선형 동선으로 확장되어 Linear Forest라는 도시형 숲 구조로 발전한다."
+  },
+  {
+    "source": "Linear Forest",
+    "target": "Controlled Curve",
+    "relationship": "enhances",
+    "description": "선형 식재축에 곡선 전환을 결합하면 동선의 경직성이 완화되어 Controlled Curve의 효과가 더욱 분명해진다."
+  },
+  {
+    "source": "Urban Canopy",
+    "target": "Framed Nature",
+    "relationship": "supports",
+    "description": "풍부한 교목 캐노피는 건축 프레임 안에서 자연을 강조해 보여주는 Framed Nature 연출의 핵심 배경이 된다."
+  },
+  {
+    "source": "Framed Nature",
+    "target": "Quiet Resort",
+    "relationship": "creates",
+    "description": "선택적으로 조율된 자연 경관과 건축 축의 조응은 절제된 고급감과 안정감을 제공해 Quiet Resort 분위기를 형성한다."
+  },
+  {
+    "source": "Spatial Relief",
+    "target": "Quiet Resort",
+    "relationship": "strengthens",
+    "description": "도시적 긴장을 완충하는 Spatial Relief는 Quiet Resort의 정서적 목표인 차분한 체류 경험을 지속적으로 강화한다."
+  },
+  {
+    "source": "Signature Pause",
+    "target": "Quiet Resort",
+    "relationship": "enhances",
+    "description": "상징적 체류 포인트인 Signature Pause는 공간의 기억성과 정서적 몰입을 높여 Quiet Resort의 감성 완성도를 높인다."
+  }
+]
