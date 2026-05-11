@@ -627,8 +627,8 @@ function applyOntologyReasoning(weightedConcepts = [], ontologyData = {}, useExt
 }
 
 function renderOntologyPanel(state = {}) {
-  const viewer = document.getElementById("ontologyResponseViewer");
-  const badge = document.getElementById("ontologyConnectionBadge");
+  const viewer = document.querySelector("#ontologyResponseViewer");
+  const badge = document.querySelector("#ontologyConnectionBadge");
   if (!viewer || !badge) return;
   const status = asText(state?.status, "idle");
   badge.className = `connection-badge ${status}`;
@@ -637,8 +637,8 @@ function renderOntologyPanel(state = {}) {
 }
 
 async function testMcpConnection() {
-  const url = document.getElementById("ontologyMcpUrl")?.value?.trim();
-  const keyword = document.getElementById("ontologyQueryKeyword")?.value?.trim();
+  const url = document.querySelector("#ontologyMcpUrl")?.value?.trim();
+  const keyword = document.querySelector("#ontologyQueryKeyword")?.value?.trim();
   if (!url) {
     const failState = { status: "fail", httpStatus: "N/A", error: "MCP URL이 비어 있습니다.", data: fallbackOntologySample };
     renderOntologyPanel(failState);
@@ -823,7 +823,7 @@ function renderResult(rec) {
         `).join("") || "<span>-</span>"}</div>
       </div>
       <div class="bubble-zones">${bubbleZones.map((zone) => `<section class="bubble-zone"><h4>[ ${asText(zone?.zone).toUpperCase()} ]</h4><p>${safeArray(zone?.items).map((item) => `${asText(item?.name)} (${Math.round(item?.ratio || 0)}%)`).join(" · ")}</p></section>`).join("")}</div></article>
-      <article class="result-card full-width"><h3>Ontology-Augmented Reasoning</h3><div class="nested-grid"><div class="sub-card"><h4>detected ontology concepts</h4>${renderNestedList(safeArray(ontologyReasoning?.concepts))}</div><div class="sub-card"><h4>inferred strategy boosts</h4>${renderNestedList(safeArray(ontologyReasoning?.boosts))}</div><div class="sub-card"><h4>ontology relation summary</h4>${renderNestedList(safeArray(ontologyReasoning?.relations).map((r) => `${asText(r?.source)} → ${asText(r?.target)} (w:${Number(r?.weight || 0).toFixed(2)})`))}</div></div></article>
+      <article class="result-card full-width"><h3>Ontology-Augmented Reasoning</h3><div class="nested-grid"><div class="sub-card"><h4>detected ontology concepts</h4>${renderNestedList(safeArray(ontologyReasoning?.concepts))}</div><div class="sub-card"><h4>inferred strategy boosts</h4>${renderNestedList(safeArray(ontologyReasoning?.boosts))}</div><div class="sub-card"><h4>relation summary</h4>${renderNestedList(safeArray(ontologyReasoning?.relations).map((r) => `${asText(r?.source)} → ${asText(r?.target)} (w:${Number(r?.weight || 0).toFixed(2)})`))}</div></div></article>
     </div>`;
 }
 
@@ -862,9 +862,9 @@ function ensureRenderPipeline() {
   const strategyForm = document.getElementById("strategy-form");
   if (strategyForm) {
     let ontologyState = { status: "idle", data: null };
-    const toggle = document.getElementById("useExternalOntology");
-    const controls = document.getElementById("ontologyControls");
-    const testButton = document.getElementById("ontologyTestButton");
+    const toggle = document.querySelector("#useExternalOntology");
+    const controls = document.querySelector("#ontologyControls");
+    const testButton = document.querySelector("#ontologyTestButton");
     if (toggle && controls) {
       toggle.addEventListener("change", () => {
         controls.classList.toggle("hidden", !toggle.checked);
@@ -891,7 +891,7 @@ function ensureRenderPipeline() {
       tone: document.getElementById("tone").value,
       maintenance: document.getElementById("maintenance").value,
       conditions: [...document.querySelectorAll("#conditions input:checked")].map((i) => i.value),
-      useExternalOntology: Boolean(document.getElementById("useExternalOntology")?.checked),
+      useExternalOntology: Boolean(document.querySelector("#useExternalOntology")?.checked),
       ontologyData: ontologyState?.data
     };
     renderResult(recommend(input, db));
