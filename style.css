@@ -41,6 +41,15 @@ select, button {
   font-size: 0.95rem;
   background: #fff;
 }
+input[type="text"], input[type="number"], input[type="url"], input[type="file"] {
+  margin-top: 0.35rem;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.56rem 0.7rem;
+  font-size: 0.95rem;
+  background: #fff;
+}
 fieldset { border: 1px solid var(--line); border-radius: 10px; margin: 1rem 0; }
 .check-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; }
 .check-grid label { font-weight: 500; color: #2d3c34; }
@@ -48,6 +57,17 @@ fieldset { border: 1px solid var(--line); border-radius: 10px; margin: 1rem 0; }
 button { background: var(--accent); color: #fff; font-weight: 700; cursor: pointer; }
 button:hover { opacity: .95; }
 .status { margin: .6rem 0 0; color: var(--subtle); }
+.toggle-row { display: flex; align-items: center; gap: 0.45rem; }
+.toggle-row input { width: auto; margin-top: 0; }
+.hidden { display: none; }
+.ontology-controls { margin-top: 0.8rem; border: 1px solid #d9e4dd; border-radius: 10px; padding: 0.8rem; background: #f8fbf9; }
+.ontology-actions { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.75rem; }
+.secondary-button { max-width: 220px; background: #486d5a; }
+.connection-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.2rem 0.55rem; font-size: 0.82rem; font-weight: 700; border: 1px solid #c8d7ce; }
+.connection-badge.idle { background: #f0f4f2; color: #4a5e53; }
+.connection-badge.success { background: #eaf7ef; color: #1f5c36; border-color: #79b68f; }
+.connection-badge.fail { background: #fff1f1; color: #812f2f; border-color: #de9898; }
+.ontology-response-viewer { margin-top: 0.7rem; border: 1px dashed #c2d1c8; border-radius: 8px; padding: 0.6rem; background: #fff; min-height: 120px; white-space: pre-wrap; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; line-height: 1.45; }
 
 .result-grid {
   display: grid;

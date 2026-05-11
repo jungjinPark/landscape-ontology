@@ -72,6 +72,22 @@
           </fieldset>
 
           <fieldset>
+            <legend>외부 온톨로지 연결 (Optional)</legend>
+            <label class="toggle-row"><input type="checkbox" id="useExternalOntology" />외부 온톨로지 사용</label>
+            <div id="ontologyControls" class="ontology-controls hidden">
+              <div class="field-grid">
+                <label>MCP URL<input type="url" id="ontologyMcpUrl" placeholder="https://your-opencrab-mcp-url" /></label>
+                <label>Query Keyword<input type="text" id="ontologyQueryKeyword" placeholder="예: Healing Garden" /></label>
+              </div>
+              <div class="ontology-actions">
+                <button type="button" id="ontologyTestButton" class="secondary-button">온톨로지 연결 테스트</button>
+                <span id="ontologyConnectionBadge" class="connection-badge idle">미연결</span>
+              </div>
+              <div id="ontologyResponseViewer" class="ontology-response-viewer">응답 데이터가 여기에 표시됩니다.</div>
+            </div>
+          </fieldset>
+
+          <fieldset>
             <legend>프로젝트 조건 입력 (복수 선택)</legend>
             <div class="field-grid">
               <label>도시 맥락

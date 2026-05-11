@@ -19,6 +19,11 @@ const fallbackData = {
   strategyCompatibility: {}
 };
 
+const fallbackOntologySample = {
+  concepts: ["Healing Garden", "Recovery Courtyard", "Slow Walk", "Layered Nature"],
+  relations: [{ source: "Quiet Resort", target: "Healing Garden", weight: 0.92 }]
+};
+
 const baseConceptWeights = {
   "Urban Canopy": 46, "Controlled Curve": 43, "Quiet Resort": 42, "Spatial Relief": 37,
   "Healing Flow": 44, "Layered Nature": 40, "Controlled Edge": 41, "Linear Forest": 38,
@@ -541,7 +546,8 @@ function buildSiteAnalysisSummary(input, topConcepts) {
 function recommend(input, db) {
   const rule = db.designDecisionRules.find((r) => r.project_type === input.projectType) || db.designDecisionRules[0];
   const weightedConcepts = applySiteInputAdjustments(computeWeights(input, db, rule), input);
-  const compatibilityResult = applyCompatibilityRefinement(weightedConcepts, db.strategyCompatibility);
+  const ontologyResult = applyOntologyReasoning(weightedConcepts, input.ontologyData, input.useExternalOntology);
+  const compatibilityResult = applyCompatibilityRefinement(ontologyResult.refinedWeights, db.strategyCompatibility);
   const hierarchy = toHierarchy(compatibilityResult.refined);
 
   const primaryDesignLanguage = hierarchy.primary.map((v) => `${v.concept} ${v.score}`);
@@ -581,6 +587,7 @@ function recommend(input, db) {
     spaceAllocation,
     layoutLogic,
     bubbleDiagram,
+    ontologyReasoning: ontologyResult.summary,
     siteAnalysisSummary: buildSiteAnalysisSummary(input, compatibilityResult.refined.map((v) => v.concept)),
     plantingStrategies: {
       "캐노피 전략": uniq(mappedPlanting.filter((item) => item.includes("캐노피") || item.includes("교목"))).slice(0, 2),
@@ -589,6 +596,68 @@ function recommend(input, db) {
       "유지관리 전략": input.maintenance === "저관리" ? ["내건성·저관리 수종 중심의 관수/전정 단순화"] : ["현장 관리 수준에 맞춘 단계별 관수·전정 계획을 적용"]
     }
   };
+}
+
+function applyOntologyReasoning(weightedConcepts = [], ontologyData = {}, useExternalOntology = false) {
+  if (!useExternalOntology) return { refinedWeights: weightedConcepts, summary: { enabled: false, concepts: [], boosts: [], relations: [] } };
+  const boosts = { "Healing Garden": { target: "Healing Flow", bonus: 10 }, "Recovery Courtyard": { target: "Quiet Resort", bonus: 8 }, "Forest Buffer": { target: "Urban Canopy", bonus: 6 } };
+  const next = weightedConcepts.map((w) => ({ ...w, reasons: [...safeArray(w?.reasons)] }));
+  const concepts = safeArray(ontologyData?.concepts);
+  const relations = safeArray(ontologyData?.relations);
+  const inferredBoosts = [];
+  concepts.forEach((concept) => {
+    const rule = boosts[concept];
+    if (!rule) return;
+    const target = next.find((item) => item.concept === rule.target);
+    if (!target) return;
+    target.score = clampScore(target.score + rule.bonus);
+    target.reasons.push(`ontology +${rule.bonus} (${concept})`);
+    inferredBoosts.push(`${concept} → ${rule.target} +${rule.bonus}`);
+  });
+  relations.forEach((relation) => {
+    const source = asText(relation?.source, "");
+    const target = asText(relation?.target, "");
+    const weight = Number(relation?.weight || 0);
+    const sourceItem = next.find((item) => item.concept === source);
+    const targetItem = next.find((item) => item.concept === target);
+    if (sourceItem) sourceItem.reasons.push(`ontology relation(${target}) weight ${weight.toFixed(2)}`);
+    if (targetItem) targetItem.reasons.push(`ontology relation(${source}) weight ${weight.toFixed(2)}`);
+  });
+  return { refinedWeights: next.sort((a, b) => b.score - a.score), summary: { enabled: true, concepts, boosts: inferredBoosts, relations } };
+}
+
+function renderOntologyPanel(state = {}) {
+  const viewer = document.getElementById("ontologyResponseViewer");
+  const badge = document.getElementById("ontologyConnectionBadge");
+  if (!viewer || !badge) return;
+  const status = asText(state?.status, "idle");
+  badge.className = `connection-badge ${status}`;
+  badge.textContent = status === "success" ? "연결 성공" : status === "fail" ? "연결 실패(샘플 사용)" : "미연결";
+  viewer.textContent = JSON.stringify(state, null, 2);
+}
+
+async function testMcpConnection() {
+  const url = document.getElementById("ontologyMcpUrl")?.value?.trim();
+  const keyword = document.getElementById("ontologyQueryKeyword")?.value?.trim();
+  if (!url) {
+    const failState = { status: "fail", httpStatus: "N/A", error: "MCP URL이 비어 있습니다.", data: fallbackOntologySample };
+    renderOntologyPanel(failState);
+    return failState;
+  }
+  try {
+    const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: keyword || "" }) });
+    const raw = await response.text();
+    let parsed = {};
+    try { parsed = JSON.parse(raw); } catch { parsed = { raw }; }
+    const okState = { status: response.ok ? "success" : "fail", httpStatus: response.status, error: response.ok ? null : "HTTP 오류", data: response.ok ? parsed : fallbackOntologySample };
+    if (!response.ok) okState.errorLog = parsed;
+    renderOntologyPanel(okState);
+    return okState;
+  } catch (error) {
+    const failState = { status: "fail", httpStatus: "NetworkError", error: String(error), errorLog: String(error?.stack || ""), data: fallbackOntologySample };
+    renderOntologyPanel(failState);
+    return failState;
+  }
 }
 
 function renderNestedList(items) { const list = safeArray(items); return `<ul>${list.map((v) => `<li>${asText(v)}</li>`).join("")}</ul>`; }
@@ -686,6 +755,7 @@ function renderResult(rec) {
   const bubbleDiagram = rec?.bubbleDiagram || {};
   const bubbleZones = safeArray(bubbleDiagram?.byZone);
   const bubbleSequence = safeArray(bubbleDiagram?.bubbles);
+  const ontologyReasoning = rec?.ontologyReasoning || {};
 
   let scenarioMarkup = "";
   try {
@@ -753,6 +823,7 @@ function renderResult(rec) {
         `).join("") || "<span>-</span>"}</div>
       </div>
       <div class="bubble-zones">${bubbleZones.map((zone) => `<section class="bubble-zone"><h4>[ ${asText(zone?.zone).toUpperCase()} ]</h4><p>${safeArray(zone?.items).map((item) => `${asText(item?.name)} (${Math.round(item?.ratio || 0)}%)`).join(" · ")}</p></section>`).join("")}</div></article>
+      <article class="result-card full-width"><h3>Ontology-Augmented Reasoning</h3><div class="nested-grid"><div class="sub-card"><h4>detected ontology concepts</h4>${renderNestedList(safeArray(ontologyReasoning?.concepts))}</div><div class="sub-card"><h4>inferred strategy boosts</h4>${renderNestedList(safeArray(ontologyReasoning?.boosts))}</div><div class="sub-card"><h4>ontology relation summary</h4>${renderNestedList(safeArray(ontologyReasoning?.relations).map((r) => `${asText(r?.source)} → ${asText(r?.target)} (w:${Number(r?.weight || 0).toFixed(2)})`))}</div></div></article>
     </div>`;
 }
 
@@ -790,6 +861,22 @@ function ensureRenderPipeline() {
 
   const strategyForm = document.getElementById("strategy-form");
   if (strategyForm) {
+    let ontologyState = { status: "idle", data: null };
+    const toggle = document.getElementById("useExternalOntology");
+    const controls = document.getElementById("ontologyControls");
+    const testButton = document.getElementById("ontologyTestButton");
+    if (toggle && controls) {
+      toggle.addEventListener("change", () => {
+        controls.classList.toggle("hidden", !toggle.checked);
+        if (!toggle.checked) {
+          ontologyState = { status: "idle", data: null };
+          renderOntologyPanel(ontologyState);
+        }
+      });
+    }
+    if (testButton) {
+      testButton.addEventListener("click", async () => { ontologyState = await testMcpConnection(); });
+    }
     strategyForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const input = {
@@ -803,7 +890,9 @@ function ensureRenderPipeline() {
       urbanContext: document.getElementById("urbanContext").value,
       tone: document.getElementById("tone").value,
       maintenance: document.getElementById("maintenance").value,
-      conditions: [...document.querySelectorAll("#conditions input:checked")].map((i) => i.value)
+      conditions: [...document.querySelectorAll("#conditions input:checked")].map((i) => i.value),
+      useExternalOntology: Boolean(document.getElementById("useExternalOntology")?.checked),
+      ontologyData: ontologyState?.data
     };
     renderResult(recommend(input, db));
   });
@@ -824,5 +913,5 @@ function ensureRenderPipeline() {
   });
   }
 
-  renderResult(recommend({ projectName: "샘플 프로젝트", siteAddress: "서울", siteArea: 24000, projectType: "Office Headquarters", buildingPlacement: "중앙배치", vehicleFlow:["전면 drop-off"], pedestrianFlow:["주출입구 연결 중요"], urbanContext: "도심형", tone: "Quiet Resort", maintenance: "중관리", conditions: ["보행 연결 중요", "공개공지 포함"] }, db));
+  renderResult(recommend({ projectName: "샘플 프로젝트", siteAddress: "서울", siteArea: 24000, projectType: "Office Headquarters", buildingPlacement: "중앙배치", vehicleFlow:["전면 drop-off"], pedestrianFlow:["주출입구 연결 중요"], urbanContext: "도심형", tone: "Quiet Resort", maintenance: "중관리", conditions: ["보행 연결 중요", "공개공지 포함"], useExternalOntology: false, ontologyData: null }, db));
 })();
