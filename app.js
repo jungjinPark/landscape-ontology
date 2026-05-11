@@ -756,11 +756,41 @@ function renderResult(rec) {
     </div>`;
 }
 
+function ensureRenderPipeline() {
+  const mainContainer = document.querySelector("main.container");
+  if (!mainContainer) return { ok: false, reason: "main.container missing" };
+
+  const siteInput = document.querySelector(".site-input-card");
+  const resultPanel = document.querySelector(".result-panel");
+  const resultNode = document.getElementById("result");
+
+  if (!siteInput) return { ok: false, reason: ".site-input-card missing" };
+  if (!resultPanel) return { ok: false, reason: ".result-panel missing" };
+  if (!resultNode) return { ok: false, reason: "#result missing" };
+
+  const inputIndex = [...mainContainer.children].indexOf(siteInput);
+  const resultIndex = [...mainContainer.children].indexOf(resultPanel);
+  if (inputIndex > resultIndex) {
+    mainContainer.insertBefore(siteInput, resultPanel);
+  }
+
+  return { ok: true };
+}
+
 (async function init() {
+  const pipeline = ensureRenderPipeline();
+  if (!pipeline.ok) {
+    console.error("Render pipeline check failed:", pipeline.reason);
+    return;
+  }
+
   const status = document.getElementById("status");
   const db = await loadData();
-  status.textContent = "데이터 로딩 완료. Weight 기반 추론 시스템 활성화.";
-  document.getElementById("strategy-form").addEventListener("submit", (e) => {
+  if (status) status.textContent = "데이터 로딩 완료. Weight 기반 추론 시스템 활성화.";
+
+  const strategyForm = document.getElementById("strategy-form");
+  if (strategyForm) {
+    strategyForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const input = {
       projectName: document.getElementById("projectName").value,
@@ -777,7 +807,11 @@ function renderResult(rec) {
     };
     renderResult(recommend(input, db));
   });
-  document.getElementById("sitePlanImage").addEventListener("change", (e) => {
+  }
+
+  const sitePlanImage = document.getElementById("sitePlanImage");
+  if (sitePlanImage) {
+    sitePlanImage.addEventListener("change", (e) => {
     const file = e.target.files?.[0];
     const preview = document.getElementById("sitePlanPreview");
     if (!preview) return;
@@ -788,5 +822,7 @@ function renderResult(rec) {
     reader.onload = () => { preview.innerHTML = `<img src="${reader.result}" alt="평면도 미리보기" />`; };
     reader.readAsDataURL(file);
   });
+  }
+
   renderResult(recommend({ projectName: "샘플 프로젝트", siteAddress: "서울", siteArea: 24000, projectType: "Office Headquarters", buildingPlacement: "중앙배치", vehicleFlow:["전면 drop-off"], pedestrianFlow:["주출입구 연결 중요"], urbanContext: "도심형", tone: "Quiet Resort", maintenance: "중관리", conditions: ["보행 연결 중요", "공개공지 포함"] }, db));
 })();
